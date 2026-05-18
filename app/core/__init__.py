@@ -1,0 +1,1 @@
+"""Core package — Smart-WorkLife."""
