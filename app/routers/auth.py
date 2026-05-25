@@ -56,6 +56,18 @@ async def update_profile(
     return await AuthService.update_user_profile(db, current_user_id, data)
 
 
+@router.put("/onboarding", response_model=UserOut)
+async def onboarding(
+    data: UserProfileUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user_id: uuid.UUID = Depends(get_current_user_id)
+):
+    """
+    Endpoint untuk menyimpan data onboarding user pertama kali (kesehatan & pekerjaan).
+    """
+    return await AuthService.update_user_profile(db, current_user_id, data)
+
+
 @router.post("/google", response_model=Token)
 async def google_auth(data: GoogleAuth, db: AsyncSession = Depends(get_db)):
     """

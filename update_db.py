@@ -1,6 +1,6 @@
 import asyncio
 from sqlalchemy import text
-from app.database import async_session
+from app.database import async_session, engine
 
 async def update_schema():
     async with async_session() as session:
@@ -24,5 +24,13 @@ async def update_schema():
         await session.commit()
         print("Schema update completed!")
 
+async def main():
+    try:
+        await update_schema()
+    finally:
+        # Proper cleanup to prevent crashes in asyncio loop on Windows
+        await engine.dispose()
+        print("Engine disposed.")
+
 if __name__ == "__main__":
-    asyncio.run(update_schema())
+    asyncio.run(main())
