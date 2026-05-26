@@ -48,17 +48,34 @@ async def _sync_hydration_target(db: AsyncSession, user_id: uuid.UUID, weight_kg
 
 
 # --- Hydration Settings ---
-async def get_hydration_setting(db: AsyncSession, user_id: uuid.UUID) -> Optional[HydrationSetting]:
+async def get_hydration_setting(db: AsyncSession, user_id: uuid.UUID) -> HydrationSetting:
+    from datetime import time
     result = await db.execute(select(HydrationSetting).where(HydrationSetting.user_id == user_id))
-    return result.scalar_one_or_none()
+    setting = result.scalar_one_or_none()
+    if not setting:
+        # Check if user has a BMI profile to set target based on weight
+        bmi_result = await db.execute(select(BMIProfile).where(BMIProfile.user_id == user_id))
+        bmi = bmi_result.scalar_one_or_none()
+        target = round(bmi.weight_kg * 30, 1) if bmi else 2000.0
+        
+        setting = HydrationSetting(
+            user_id=user_id,
+            daily_target_ml=target,
+            reminder_interval_minutes=60,
+            reminder_enabled=False,
+            reminder_start_time=time(8, 0),
+            reminder_end_time=time(20, 0),
+        )
+        db.add(setting)
+        await db.flush()
+        await db.refresh(setting)
+    return setting
 
 
 async def update_hydration_setting(
     db: AsyncSession, user_id: uuid.UUID, data: HydrationSettingUpdate
-) -> Optional[HydrationSetting]:
+) -> HydrationSetting:
     setting = await get_hydration_setting(db, user_id)
-    if not setting:
-        return None
     for field, value in data.model_dump(exclude_unset=True).items():
         setattr(setting, field, value)
     await db.flush()
