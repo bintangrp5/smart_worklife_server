@@ -13,7 +13,7 @@ from app.crud import auth as crud_auth
 from app.core.security import verify_password, create_access_token, get_password_hash
 from app.schemas.auth import (
     UserRegister, UserLogin, Token, OTPVerify,
-    ForgotPassword, ResetPassword, OTPResend, UserOut, UserProfileUpdate
+    ForgotPassword, ResetPassword, OTPResend, UserOut, UserProfileUpdate, GoogleAuth
 )
 
 
@@ -207,6 +207,7 @@ class AuthService:
         if not user:
             raise HTTPException(status_code=404, detail="User tidak ditemukan.")
 
+        if data.full_name is not None: user.full_name = data.full_name
         if data.gender is not None: user.gender = data.gender
         if data.age is not None: user.age = data.age
         if data.industry is not None: user.industry = data.industry
@@ -249,4 +250,84 @@ class AuthService:
             weight_kg=bmi_after.weight_kg if bmi_after else None,
             height_cm=bmi_after.height_cm if bmi_after else None,
         )
+
+    @staticmethod
+    async def google_auth(db: AsyncSession, data: GoogleAuth) -> Token:
+        import httpx
+        from fastapi import HTTPException, status
+        from app.models.health import BMIProfile
+
+        id_token = data.id_token
+        # Verifikasi token menggunakan API Google TokenInfo
+        async with httpx.AsyncClient() as client:
+            resp = await client.get(f"https://oauth2.googleapis.com/tokeninfo?id_token={id_token}")
+            if resp.status_code != 200:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Token Google tidak valid atau kedaluwarsa.",
+                )
+            token_info = resp.json()
+
+        email = token_info.get("email")
+        full_name = token_info.get("name")
+        google_id = token_info.get("sub")
+        picture = token_info.get("picture")
+
+        if not email:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Token Google tidak mengandung email.",
+            )
+
+        # Cari user berdasarkan email
+        user = await crud_auth.get_user_by_email(db, email)
+        if not user:
+            # Buat user baru dengan create_google_user
+            user = await crud_auth.create_google_user(
+                db,
+                email=email,
+                full_name=full_name,
+                google_id=google_id,
+                avatar_url=picture
+            )
+        else:
+            # Hubungkan akun jika belum terhubung
+            need_commit = False
+            if not user.google_id:
+                user.google_id = google_id
+                need_commit = True
+            if picture and not user.avatar_url:
+                user.avatar_url = picture
+                need_commit = True
+            if not user.is_verified:
+                user.is_verified = True
+                need_commit = True
+            if need_commit:
+                await db.commit()
+                await db.refresh(user)
+
+        # Buat JWT access token
+        access_token = create_access_token(subject=user.id)
+
+        # Ambil BMI jika ada
+        bmi_res = await db.execute(select(BMIProfile).where(BMIProfile.user_id == user.id))
+        bmi = bmi_res.scalars().first()
+
+        return {
+            "access_token": access_token,
+            "token_type": "bearer",
+            "user": {
+                "id": str(user.id),
+                "email": user.email,
+                "full_name": user.full_name,
+                "is_verified": user.is_verified,
+                "gender": user.gender,
+                "age": user.age,
+                "industry": user.industry,
+                "work_start_time": user.work_start_time,
+                "work_end_time": user.work_end_time,
+                "weight_kg": bmi.weight_kg if bmi else None,
+                "height_cm": bmi.height_cm if bmi else None,
+            }
+        }
 

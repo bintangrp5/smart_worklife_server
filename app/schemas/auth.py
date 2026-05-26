@@ -23,6 +23,7 @@ class UserOut(BaseModel):
 
 
 class UserProfileUpdate(BaseModel):
+    full_name: Optional[str] = None
     gender: Optional[str] = None
     age: Optional[int] = None
     industry: Optional[str] = None

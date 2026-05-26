@@ -73,9 +73,5 @@ async def google_auth(data: GoogleAuth, db: AsyncSession = Depends(get_db)):
     """
     Endpoint untuk login/register via Google.
     Aplikasi mobile akan mengirimkan id_token dari Google.
-    NOTE: Implementasi verifikasi google-auth library menyusul.
     """
-    raise HTTPException(
-        status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        detail="Google Auth verification logic needs to be implemented with google-auth library.",
-    )
+    return await AuthService.google_auth(db, data)
