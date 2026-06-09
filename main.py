@@ -13,6 +13,10 @@ from app.models import *  # noqa: F401, F403 — populate SQLAlchemy metadata
 
 # Routers
 from app.routers import auth, todo, pomodoro, health, stretching, notulen, dashboard
+from fastapi.staticfiles import StaticFiles
+import os
+
+os.makedirs("uploads/avatars", exist_ok=True)
 
 
 @asynccontextmanager
@@ -63,6 +67,8 @@ app.include_router(stretching.router,  prefix=PREFIX)
 app.include_router(notulen.router,     prefix=PREFIX)
 app.include_router(dashboard.router,   prefix=PREFIX)
 
+# Mount static folder
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 # ── Root & Health Check ───────────────────────────────────────────────
 @app.get("/", tags=["Root"])
