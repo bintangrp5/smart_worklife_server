@@ -13,7 +13,7 @@ from app.schemas.todo import TodoCreate, TodoUpdate
 async def create_todo(db: AsyncSession, user_id: uuid.UUID, data: TodoCreate) -> Todo:
     todo = Todo(user_id=user_id, **data.model_dump())
     db.add(todo)
-    await db.flush()
+    await db.commit()
     await db.refresh(todo)
     return todo
 
@@ -64,11 +64,11 @@ async def update_todo(db: AsyncSession, todo: Todo, data: TodoUpdate) -> Todo:
     for field, value in update_data.items():
         setattr(todo, field, value)
 
-    await db.flush()
+    await db.commit()
     await db.refresh(todo)
     return todo
 
 
 async def delete_todo(db: AsyncSession, todo: Todo) -> None:
     await db.delete(todo)
-    await db.flush()
+    await db.commit()
