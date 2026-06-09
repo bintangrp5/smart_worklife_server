@@ -70,6 +70,7 @@ class AuthService:
             work_end_time=user.work_end_time,
             weight_kg=None,
             height_cm=None,
+            avatar_url=user.avatar_url,
         )
 
     @staticmethod
@@ -112,6 +113,7 @@ class AuthService:
                 "work_end_time": user.work_end_time,
                 "weight_kg": bmi.weight_kg if bmi else None,
                 "height_cm": bmi.height_cm if bmi else None,
+                "avatar_url": user.avatar_url,
             }
         }
 
@@ -155,6 +157,7 @@ class AuthService:
                 "work_end_time": user.work_end_time,
                 "weight_kg": bmi.weight_kg if bmi else None,
                 "height_cm": bmi.height_cm if bmi else None,
+                "avatar_url": user.avatar_url,
             }
         }
 
@@ -249,6 +252,52 @@ class AuthService:
             work_end_time=user.work_end_time,
             weight_kg=bmi_after.weight_kg if bmi_after else None,
             height_cm=bmi_after.height_cm if bmi_after else None,
+            avatar_url=user.avatar_url,
+        )
+
+    @staticmethod
+    async def upload_avatar(db: AsyncSession, user_id: uuid.UUID, file) -> UserOut:
+        from app.models.user import User
+        from app.models.health import BMIProfile
+        from fastapi import HTTPException
+        import os
+        import time
+
+        result = await db.execute(select(User).where(User.id == user_id))
+        user = result.scalars().first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User tidak ditemukan.")
+
+        # Save file to disk
+        ext = file.filename.split('.')[-1] if '.' in file.filename else 'jpg'
+        filename = f"{user_id}_{int(time.time())}.{ext}"
+        filepath = os.path.join("uploads", "avatars", filename)
+
+        contents = await file.read()
+        with open(filepath, "wb") as f:
+            f.write(contents)
+
+        user.avatar_url = f"/uploads/avatars/{filename}"
+        await db.commit()
+        await db.refresh(user)
+
+        # Get BMI
+        bmi_res = await db.execute(select(BMIProfile).where(BMIProfile.user_id == user_id))
+        bmi = bmi_res.scalars().first()
+
+        return UserOut(
+            id=user.id,
+            email=user.email,
+            full_name=user.full_name,
+            is_verified=user.is_verified,
+            gender=user.gender,
+            age=user.age,
+            industry=user.industry,
+            work_start_time=user.work_start_time,
+            work_end_time=user.work_end_time,
+            weight_kg=bmi.weight_kg if bmi else None,
+            height_cm=bmi.height_cm if bmi else None,
+            avatar_url=user.avatar_url,
         )
 
     @staticmethod
@@ -328,6 +377,7 @@ class AuthService:
                 "work_end_time": user.work_end_time,
                 "weight_kg": bmi.weight_kg if bmi else None,
                 "height_cm": bmi.height_cm if bmi else None,
+                "avatar_url": user.avatar_url,
             }
         }
 

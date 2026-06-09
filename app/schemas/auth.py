@@ -15,8 +15,10 @@ class UserOut(BaseModel):
     work_start_time: Optional[str] = None
     work_end_time: Optional[str] = None
     # BMI fields (optional to include here)
+    # BMI fields (optional to include here)
     weight_kg: Optional[float] = None
     height_cm: Optional[float] = None
+    avatar_url: Optional[str] = None
 
     class Config:
         from_attributes = True

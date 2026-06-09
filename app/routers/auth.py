@@ -2,7 +2,7 @@
 Auth Router — thin layer: validasi input, delegasi ke AuthService, return response.
 Logic bisnis TIDAK ada di sini — semua ada di app.services.auth_service.
 """
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
@@ -75,3 +75,15 @@ async def google_auth(data: GoogleAuth, db: AsyncSession = Depends(get_db)):
     Aplikasi mobile akan mengirimkan id_token dari Google.
     """
     return await AuthService.google_auth(db, data)
+
+
+@router.post("/avatar", response_model=UserOut)
+async def upload_avatar(
+    file: UploadFile = File(...),
+    db: AsyncSession = Depends(get_db),
+    current_user_id: uuid.UUID = Depends(get_current_user_id)
+):
+    """
+    Endpoint untuk mengupload dan memperbarui foto profil.
+    """
+    return await AuthService.upload_avatar(db, current_user_id, file)
