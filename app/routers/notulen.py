@@ -6,11 +6,53 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import get_db, get_current_user_id
 from app.crud import notulen as crud
-from app.schemas.notulen import NotulenSave, NotulenResponse, NotulenListItem
+from app.schemas.notulen import (
+    NotulenCreate,
+    NotulenSave,
+    NotulenResponse,
+    NotulenListItem,
+    NotulenRefineRequest,
+    NotulenRefineResponse,
+)
 from app.services.stt_service import transcribe_audio
-from app.services.ai_service import generate_summary
+from app.services.ai_service import generate_summary, refine_transcript
 
 router = APIRouter(prefix="/notulens", tags=["Smart Notulen"])
+
+
+
+@router.post("/from-text", response_model=NotulenResponse, status_code=status.HTTP_201_CREATED)
+async def create_from_text(
+    payload: NotulenCreate,
+    db: AsyncSession = Depends(get_db),
+    user_id: uuid.UUID = Depends(get_current_user_id),
+):
+    """
+    Buat notulen langsung dari teks transkripsi (dari live STT di Flutter).
+    Tidak memerlukan upload file audio.
+    """
+    notulen = await crud.create_notulen(
+        db,
+        user_id=user_id,
+        transcript=payload.transcript,
+        duration_seconds=payload.duration_seconds,
+        audio_url=None,
+    )
+    return notulen
+
+
+@router.post("/refine", response_model=NotulenRefineResponse)
+async def refine_raw_transcript(
+    payload: NotulenRefineRequest,
+    user_id: uuid.UUID = Depends(get_current_user_id),
+):
+    """
+    Memperbaiki tata bahasa, tanda baca, ejaan, serta menghilangkan filler words
+    pada teks transkripsi mentah hasil live STT.
+    """
+    refined = await refine_transcript(payload.text)
+    return NotulenRefineResponse(refined_text=refined)
+
 
 
 @router.post("/upload", response_model=NotulenResponse, status_code=status.HTTP_201_CREATED)
@@ -22,7 +64,7 @@ async def upload_audio(
     """
     Upload file audio → Speech-to-Text → simpan transcript sebagai draft notulen.
     """
-    allowed_types = {"audio/wav", "audio/mpeg", "audio/mp4", "audio/x-m4a", "audio/ogg"}
+    allowed_types = {"audio/wav", "audio/mpeg", "audio/mp4", "audio/x-m4a", "audio/ogg", "application/octet-stream"}
     if file.content_type not in allowed_types:
         raise HTTPException(status_code=400, detail=f"Format file tidak didukung: {file.content_type}")
 
@@ -113,3 +155,29 @@ async def delete_notulen(
     if not notulen:
         raise HTTPException(status_code=404, detail="Notulen tidak ditemukan.")
     await crud.delete_notulen(db, notulen)
+
+
+@router.post("/bulk-delete", status_code=status.HTTP_204_NO_CONTENT)
+async def bulk_delete_notulens(
+    payload: dict,
+    db: AsyncSession = Depends(get_db),
+    user_id: uuid.UUID = Depends(get_current_user_id),
+):
+    """
+    Hapus beberapa notulen sekaligus.
+    Body: {"ids": ["uuid1", "uuid2", ...]} atau {"delete_all": true}
+    """
+    if payload.get("delete_all"):
+        notulens = await crud.list_notulens(db, user_id)
+        for n in notulens:
+            await crud.delete_notulen(db, n)
+    else:
+        ids = payload.get("ids", [])
+        for id_str in ids:
+            try:
+                notulen_id = uuid.UUID(str(id_str))
+                notulen = await crud.get_notulen(db, notulen_id, user_id)
+                if notulen:
+                    await crud.delete_notulen(db, notulen)
+            except Exception:
+                continue

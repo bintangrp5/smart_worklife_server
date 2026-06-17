@@ -56,6 +56,8 @@ async def save_notulen(
     notulen.title = data.title
     if data.meeting_date:
         notulen.meeting_date = data.meeting_date
+    if data.transcript is not None:
+        notulen.transcript = data.transcript
     await db.flush()
     await db.refresh(notulen)
     return notulen

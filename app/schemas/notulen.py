@@ -17,6 +17,7 @@ class NotulenCreate(BaseModel):
 class NotulenSave(BaseModel):
     title: str = Field(..., min_length=1, max_length=255)
     meeting_date: Optional[datetime] = None
+    transcript: Optional[str] = None
 
 
 class NotulenResponse(BaseModel):
@@ -44,3 +45,12 @@ class NotulenListItem(BaseModel):
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class NotulenRefineRequest(BaseModel):
+    text: str = Field(..., description="Teks mentah hasil live STT yang ingin diperbagus")
+
+
+class NotulenRefineResponse(BaseModel):
+    refined_text: str = Field(..., description="Teks transkripsi yang sudah diperbagus oleh AI")
+
