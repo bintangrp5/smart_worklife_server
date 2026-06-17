@@ -20,9 +20,10 @@ class Settings(BaseSettings):
     # Google Auth
     GOOGLE_CLIENT_ID: str = ""
 
-    # AI / STT (Sprint 3 — isi sesuai provider yang dipakai)
+    # AI / STT
     OPENAI_API_KEY: str = ""
     GEMINI_API_KEY: str = ""
+    GROQ_API_KEY: str = ""
 
     class Config:
         env_file = ".env"

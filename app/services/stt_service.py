@@ -1,44 +1,55 @@
 """
 Speech-to-Text Service.
-Menggunakan OpenAI Whisper API sebagai provider utama.
-Ganti implementasi di fungsi `transcribe_audio` jika ingin menggunakan provider lain.
+Menggunakan Groq Whisper API untuk transkripsi audio.
+Groq gratis, cepat, dan akurat untuk bahasa Indonesia.
 """
 import io
-import wave
 from typing import Optional
-from openai import AsyncOpenAI
+from groq import AsyncGroq
 
 from app.core.config import settings
 
 
 async def transcribe_audio(
     audio_bytes: bytes,
-    filename: Optional[str] = "audio.wav",
+    filename: Optional[str] = "audio.m4a",
 ) -> tuple[str, Optional[int]]:
     """
-    Konversi audio bytes ke teks menggunakan Whisper API.
+    Konversi audio bytes ke teks menggunakan Groq Whisper API.
 
     Returns:
         transcript (str): Teks hasil transkripsi.
         duration_seconds (int | None): Estimasi durasi audio.
     """
-    if not settings.OPENAI_API_KEY:
-        # Fallback mock jika API key belum diisi
-        return "[TRANSCRIPT PLACEHOLDER — Isi OPENAI_API_KEY di .env untuk mengaktifkan Speech-to-Text]", None
+    if not settings.GROQ_API_KEY:
+        return "[TRANSCRIPT PLACEHOLDER — Isi GROQ_API_KEY di .env untuk mengaktifkan Speech-to-Text]", None
 
-    client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
+    client = AsyncGroq(api_key=settings.GROQ_API_KEY)
+
+    # Tentukan ekstensi file
+    ext = "m4a"
+    if filename:
+        fname_lower = filename.lower()
+        if fname_lower.endswith(".wav"):
+            ext = "wav"
+        elif fname_lower.endswith(".mp3"):
+            ext = "mp3"
+        elif fname_lower.endswith(".ogg"):
+            ext = "ogg"
+        elif fname_lower.endswith(".webm"):
+            ext = "webm"
 
     audio_file = io.BytesIO(audio_bytes)
-    audio_file.name = filename or "audio.wav"
+    audio_file.name = f"audio.{ext}"
 
-    response = await client.audio.transcriptions.create(
-        model="whisper-1",
+    transcription = await client.audio.transcriptions.create(
         file=audio_file,
+        model="whisper-large-v3-turbo",
         language="id",
         response_format="verbose_json",
     )
 
-    transcript = response.text
-    duration_seconds = int(response.duration) if hasattr(response, "duration") and response.duration else None
+    transcript = transcription.text.strip()
+    duration_seconds = int(transcription.duration) if hasattr(transcription, "duration") and transcription.duration else None
 
     return transcript, duration_seconds
