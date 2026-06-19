@@ -8,7 +8,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
 from app.schemas.auth import (
     UserRegister, UserLogin, Token, OTPVerify,
-    ForgotPassword, ResetPassword, GoogleAuth, UserOut, OTPResend, UserProfileUpdate
+    ForgotPassword, ResetPassword, GoogleAuth, UserOut, OTPResend, UserProfileUpdate,
+    ChangePassword, RequestDeleteAccount, ConfirmDeleteAccount
 )
 from app.services.auth_service import AuthService
 from app.core.dependencies import get_current_user_id
@@ -87,3 +88,41 @@ async def upload_avatar(
     Endpoint untuk mengupload dan memperbarui foto profil.
     """
     return await AuthService.upload_avatar(db, current_user_id, file)
+
+
+@router.post("/change-password")
+async def change_password(
+    data: ChangePassword,
+    db: AsyncSession = Depends(get_db),
+    current_user_id: uuid.UUID = Depends(get_current_user_id)
+):
+    """
+    Endpoint untuk mengubah password user yang sedang login.
+    """
+    return await AuthService.change_password(db, current_user_id, data)
+
+
+@router.post("/request-delete-account")
+async def request_delete_account(
+    data: RequestDeleteAccount,
+    db: AsyncSession = Depends(get_db),
+    current_user_id: uuid.UUID = Depends(get_current_user_id)
+):
+    """
+    Endpoint untuk mengajukan penghapusan akun. Mengirim OTP ke email jika password benar.
+    """
+    return await AuthService.request_delete_account(db, current_user_id, data)
+
+
+@router.post("/confirm-delete-account")
+async def confirm_delete_account(
+    data: ConfirmDeleteAccount,
+    db: AsyncSession = Depends(get_db),
+    current_user_id: uuid.UUID = Depends(get_current_user_id)
+):
+    """
+    Endpoint untuk konfirmasi OTP hapus akun. Mengubah status akun menjadi Pending Deletion.
+    """
+    return await AuthService.confirm_delete_account(db, current_user_id, data)
+
+

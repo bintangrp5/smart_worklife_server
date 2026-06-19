@@ -39,6 +39,7 @@ class Token(BaseModel):
     access_token: str
     token_type: str
     user: Optional[UserOut] = None
+    message: Optional[str] = None
 
 
 class TokenPayload(BaseModel):
@@ -78,3 +79,18 @@ class ResetPassword(BaseModel):
 
 class GoogleAuth(BaseModel):
     id_token: str
+
+
+class ChangePassword(BaseModel):
+    current_password: str
+    new_password: str = Field(..., min_length=8)
+
+
+class RequestDeleteAccount(BaseModel):
+    password: Optional[str] = None
+
+
+class ConfirmDeleteAccount(BaseModel):
+    otp_code: str = Field(..., min_length=4, max_length=4)
+
+
