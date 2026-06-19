@@ -13,7 +13,8 @@ from app.crud import auth as crud_auth
 from app.core.security import verify_password, create_access_token, get_password_hash
 from app.schemas.auth import (
     UserRegister, UserLogin, Token, OTPVerify,
-    ForgotPassword, ResetPassword, OTPResend, UserOut, UserProfileUpdate, GoogleAuth
+    ForgotPassword, ResetPassword, OTPResend, UserOut, UserProfileUpdate, GoogleAuth,
+    ChangePassword, RequestDeleteAccount, ConfirmDeleteAccount
 )
 
 
@@ -91,6 +92,14 @@ class AuthService:
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Email belum diverifikasi.",
             )
+        # Batal hapus jika dalam masa tenggang
+        msg = None
+        if user.deletion_scheduled_at is not None:
+            user.deletion_scheduled_at = None
+            await db.commit()
+            await db.refresh(user)
+            msg = "Proses hapus batal, akun kembali normal."
+
         access_token = create_access_token(subject=user.id)
         
         # Ambil BMI jika ada (tanpa lazy load)
@@ -101,6 +110,7 @@ class AuthService:
         return {
             "access_token": access_token,
             "token_type": "bearer",
+            "message": msg,
             "user": {
                 "id": str(user.id),
                 "email": user.email,
@@ -328,8 +338,8 @@ class AuthService:
                 detail="Token Google tidak mengandung email.",
             )
 
-        # Cari user berdasarkan email
         user = await crud_auth.get_user_by_email(db, email)
+        msg = None
         if not user:
             # Buat user baru dengan create_google_user
             user = await crud_auth.create_google_user(
@@ -340,8 +350,14 @@ class AuthService:
                 avatar_url=picture
             )
         else:
-            # Hubungkan akun jika belum terhubung
             need_commit = False
+            # Batal hapus jika dalam masa tenggang
+            if user.deletion_scheduled_at is not None:
+                user.deletion_scheduled_at = None
+                msg = "Proses hapus batal, akun kembali normal."
+                need_commit = True
+
+            # Hubungkan akun jika belum terhubung
             if not user.google_id:
                 user.google_id = google_id
                 need_commit = True
@@ -365,6 +381,7 @@ class AuthService:
         return {
             "access_token": access_token,
             "token_type": "bearer",
+            "message": msg,
             "user": {
                 "id": str(user.id),
                 "email": user.email,
@@ -380,4 +397,88 @@ class AuthService:
                 "avatar_url": user.avatar_url,
             }
         }
+
+    @staticmethod
+    async def change_password(db: AsyncSession, user_id: uuid.UUID, data: ChangePassword) -> dict:
+        from app.models.user import User
+
+        result = await db.execute(select(User).where(User.id == user_id))
+        user = result.scalars().first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User tidak ditemukan.")
+
+        if not user.hashed_password:
+            # User logged in via Google and hasn't set a password yet, we allow them to set it.
+            pass
+        else:
+            if not verify_password(data.current_password, user.hashed_password):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Password saat ini salah.",
+                )
+
+        user.hashed_password = get_password_hash(data.new_password)
+        await db.commit()
+        return {"message": "Password berhasil diubah."}
+
+    @staticmethod
+    async def request_delete_account(db: AsyncSession, user_id: uuid.UUID, data: RequestDeleteAccount) -> dict:
+        from app.models.user import User
+
+        result = await db.execute(select(User).where(User.id == user_id))
+        user = result.scalars().first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User tidak ditemukan.")
+
+        # Jika user menggunakan password, lakukan verifikasi password
+        if user.hashed_password:
+            if not data.password:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Password harus diisi untuk konfirmasi.",
+                )
+            if not verify_password(data.password, user.hashed_password):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Password salah.",
+                )
+
+        # Generate OTP dengan masa berlaku 10 menit
+        from app.crud.auth import update_user_deletion_otp
+        otp = await update_user_deletion_otp(db, user)
+
+        # Kirim email OTP hapus akun
+        from app.services.email_service import send_deletion_otp_email
+        email_sent = await send_deletion_otp_email(user.email, otp)
+        if not email_sent:
+            print(f"[DEV WARNING] Email OTP hapus akun gagal dikirim ke {user.email}. OTP={otp}")
+
+        return {"message": "Kode OTP untuk hapus akun telah dikirim ke email."}
+
+    @staticmethod
+    async def confirm_delete_account(db: AsyncSession, user_id: uuid.UUID, data: ConfirmDeleteAccount) -> dict:
+        from app.models.user import User
+
+        result = await db.execute(select(User).where(User.id == user_id))
+        user = result.scalars().first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User tidak ditemukan.")
+
+        if user.otp_code != data.otp_code:
+            raise HTTPException(status_code=400, detail="Kode OTP salah.")
+
+        if user.otp_expires_at < datetime.now(timezone.utc):
+            raise HTTPException(status_code=400, detail="Kode OTP sudah kadaluarsa.")
+
+        user.deletion_scheduled_at = datetime.now(timezone.utc)
+        user.otp_code = None
+        user.otp_expires_at = None
+
+        await db.commit()
+        return {
+            "message": "Akun Anda masuk ke status Pending Deletion selama 14 hari.",
+            "deletion_scheduled_at": user.deletion_scheduled_at.isoformat()
+        }
+
+
 

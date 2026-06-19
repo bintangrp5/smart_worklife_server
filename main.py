@@ -1,7 +1,4 @@
-"""
-Smart-WorkLife API — main entrypoint.
-FastAPI + SQLAlchemy Async + PostgreSQL (Neon)
-"""
+import asyncio
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
@@ -19,10 +16,31 @@ import os
 os.makedirs("uploads/avatars", exist_ok=True)
 
 
+async def deletion_cleanup_loop():
+    """
+    Loop background untuk memicu pembersihan akun yang terjadwal dihapus (Pending Deletion).
+    Dijalankan setiap 1 jam sekali.
+    """
+    # Delay sedikit agar server siap dulu
+    await asyncio.sleep(5)
+    while True:
+        try:
+            from app.tasks.account_cleanup import clean_pending_deletions
+            await clean_pending_deletions()
+        except Exception as e:
+            print(f"[CLEANUP LOOP ERROR] {e}")
+        # Run every 1 hour (3600 seconds)
+        await asyncio.sleep(3600)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await init_db()
+    # Mulai task background pembersihan akun
+    cleanup_task = asyncio.create_task(deletion_cleanup_loop())
     yield
+    # Hentikan task saat aplikasi mati
+    cleanup_task.cancel()
 
 
 app = FastAPI(
