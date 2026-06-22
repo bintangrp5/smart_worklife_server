@@ -1,7 +1,7 @@
 """
 AI Summary Service.
 Menggunakan Google Gemini API (google-genai SDK) untuk menghasilkan ringkasan
-dan action items dari transcript rapat.
+dan action items dari transcript percakapan.
 """
 import json
 
@@ -11,22 +11,31 @@ from google.genai import types
 from app.core.config import settings
 
 SUMMARY_PROMPT = """
-Kamu adalah asisten notulis profesional. Berikut adalah transkrip rapat:
+Kamu adalah asisten transkripsi profesional. Berikut adalah transkrip rekaman percakapan/suara:
 
 ---
 {transcript}
 ---
 
 Tugasmu:
-1. Buat RINGKASAN singkat dan padat dari rapat di atas (maksimal 5 paragraf).
-2. Ekstrak daftar ACTION ITEMS yang perlu ditindaklanjuti.
+1. Buat RINGKASAN singkat dan padat dari percakapan/rekaman di atas (maksimal 5 paragraf). Hindari menggunakan kata "rapat" dalam hasil ringkasan Anda, melainkan gunakan kata seperti "percakapan", "diskusi", atau "rekaman".
+2. Ekstrak daftar REKOMENDASI TUGAS (action items) yang perlu ditindaklanjuti dari percakapan tersebut.
+
+Aturan untuk REKOMENDASI TUGAS:
+- Tuliskan setiap tugas dengan format: "Nama Tugas [PJ: Penanggung Jawab] [Due: Tenggat Waktu]"
+- Contoh: "Menyusun laporan bulanan [PJ: Budi] [Due: 2026-06-30]" atau "Menghubungi klien baru [PJ: -] [Due: -]" jika penanggung jawab atau tenggat waktu tidak disebutkan secara spesifik.
+- Temukan tugas berdasarkan indikasi dalam transkrip seperti:
+  * Kata perintah/permintaan: "tolong...", "harus...", "perlu...", "buat...", "kirim...", "kerjakan...", "siapkan..."
+  * Janji/rencana tindakan: "nanti saya akan...", "kita jadwalkan...", "saya siap...", "nanti kami kirim..."
+  * Penugasan & penanggung jawab: "tugas untuk...", "PJ-nya...", "diserahkan ke..."
+  * Target & tenggat waktu: "deadline...", "tenggat...", "selesai sebelum...", "paling lambat..."
 
 Balas HANYA dalam format JSON berikut (tanpa markdown/code block):
 {{
-  "summary": "Ringkasan rapat di sini...",
+  "summary": "Ringkasan percakapan di sini...",
   "action_items": [
-    "Action item 1",
-    "Action item 2"
+    "Tugas pertama [PJ: Nama] [Due: Tenggat]",
+    "Tugas kedua [PJ: Nama] [Due: Tenggat]"
   ]
 }}
 """
@@ -38,7 +47,7 @@ async def generate_summary(transcript: str) -> tuple[str, list[str]]:
     Jika Gemini gagal atau API Key tidak valid, otomatis fallback ke Groq.
 
     Returns:
-        summary (str): Ringkasan rapat.
+        summary (str): Ringkasan percakapan.
         action_items (list[str]): Daftar poin tindakan.
     """
     use_groq = False

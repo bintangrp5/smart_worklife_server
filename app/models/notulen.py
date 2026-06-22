@@ -13,7 +13,7 @@ from app.database import Base
 
 class Notulen(Base):
     """
-    Tabel notulens — Notulen rapat.
+    Tabel notulens — Notulen percakapan.
     Menyimpan transkripsi audio (Speech-to-Text) dan ringkasan AI.
     """
     __tablename__ = "notulens"

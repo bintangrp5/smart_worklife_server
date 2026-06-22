@@ -57,7 +57,7 @@ async def refine_raw_transcript(
 
 @router.post("/upload", response_model=NotulenResponse, status_code=status.HTTP_201_CREATED)
 async def upload_audio(
-    file: UploadFile = File(..., description="File audio rapat (WAV / MP3 / M4A, maks 60 menit)"),
+    file: UploadFile = File(..., description="File audio percakapan (WAV / MP3 / M4A, maks 60 menit)"),
     db: AsyncSession = Depends(get_db),
     user_id: uuid.UUID = Depends(get_current_user_id),
 ):
@@ -107,7 +107,7 @@ async def save_notulen(
     db: AsyncSession = Depends(get_db),
     user_id: uuid.UUID = Depends(get_current_user_id),
 ):
-    """Simpan notulen ke arsip dengan judul dan tanggal rapat."""
+    """Simpan notulen ke arsip dengan judul dan tanggal percakapan."""
     notulen = await crud.get_notulen(db, notulen_id, user_id)
     if not notulen:
         raise HTTPException(status_code=404, detail="Notulen tidak ditemukan.")
