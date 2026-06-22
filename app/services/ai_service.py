@@ -22,8 +22,8 @@ Tugasmu:
 2. Ekstrak daftar REKOMENDASI TUGAS (action items) yang perlu ditindaklanjuti dari percakapan tersebut.
 
 Aturan untuk REKOMENDASI TUGAS:
-- Tuliskan setiap tugas dengan format: "Nama Tugas [PJ: Penanggung Jawab] [Due: Tenggat Waktu]"
-- Contoh: "Menyusun laporan bulanan [PJ: Budi] [Due: 2026-06-30]" atau "Menghubungi klien baru [PJ: -] [Due: -]" jika penanggung jawab atau tenggat waktu tidak disebutkan secara spesifik.
+- Tuliskan setiap tugas dengan format: "Judul Tugas [Desc: Deskripsi detail/konteks tugas] [Due: Tenggat Waktu]"
+- Contoh: "Menyusun laporan bulanan [Desc: Menyusun laporan keuangan dan operasional bulanan] [Due: 2026-06-30]" atau "Menghubungi klien baru [Desc: -] [Due: -]" jika deskripsi atau tenggat waktu tidak disebutkan secara spesifik.
 - Temukan tugas berdasarkan indikasi dalam transkrip seperti:
   * Kata perintah/permintaan: "tolong...", "harus...", "perlu...", "buat...", "kirim...", "kerjakan...", "siapkan..."
   * Janji/rencana tindakan: "nanti saya akan...", "kita jadwalkan...", "saya siap...", "nanti kami kirim..."
@@ -34,8 +34,8 @@ Balas HANYA dalam format JSON berikut (tanpa markdown/code block):
 {{
   "summary": "Ringkasan percakapan di sini...",
   "action_items": [
-    "Tugas pertama [PJ: Nama] [Due: Tenggat]",
-    "Tugas kedua [PJ: Nama] [Due: Tenggat]"
+    "Tugas pertama [Desc: Deskripsi detail/konteks] [Due: Tenggat]",
+    "Tugas kedua [Desc: Deskripsi detail/konteks] [Due: Tenggat]"
   ]
 }}
 """
