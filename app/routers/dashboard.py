@@ -1,6 +1,9 @@
 """Router — Dashboard Home aggregation."""
 import uuid
 
+from datetime import date
+from typing import Optional
+
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -33,3 +36,15 @@ async def todo_preview(
 ):
     """Preview 5 tugas pending hari ini untuk widget di Home Screen."""
     return await crud.get_todo_preview(db, user_id)
+
+
+@router.get("/leaderboard")
+async def get_leaderboard(
+    target_date: Optional[date] = None,
+    db: AsyncSession = Depends(get_db),
+    user_id: uuid.UUID = Depends(get_current_user_id),
+):
+    """
+    Get leaderboard of all users ranked by points for a specific date (defaults to today).
+    """
+    return await crud.get_leaderboard(db, target_date)

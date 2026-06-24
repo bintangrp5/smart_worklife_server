@@ -41,6 +41,69 @@ async def create_from_text(
     return notulen
 
 
+@router.post("/save-from-chat", response_model=NotulenResponse, status_code=status.HTTP_201_CREATED)
+async def save_from_chat(
+    payload: NotulenSave,
+    db: AsyncSession = Depends(get_db),
+    user_id: uuid.UUID = Depends(get_current_user_id),
+):
+    """
+    Simpan notulen langsung ke arsip dari pesan chat.
+    User penerima dapat menyimpan notulen yang dikirim rekan mereka.
+    Body: { title, transcript (opsional), meeting_date (opsional) }
+    """
+    notulen = await crud.create_notulen(
+        db,
+        user_id=user_id,
+        transcript=payload.transcript or "",
+        duration_seconds=None,
+        audio_url=None,
+    )
+    # Langsung simpan dengan judul dan tanggal
+    from app.schemas.notulen import NotulenSave as SaveSchema
+    save_data = SaveSchema(
+        title=payload.title,
+        meeting_date=payload.meeting_date,
+        transcript=payload.transcript,
+    )
+    return await crud.save_notulen(db, notulen, save_data)
+
+
+from sqlalchemy import select
+from app.models.notulen import Notulen
+
+@router.post("/shared/{notulen_id}/save", response_model=NotulenResponse, status_code=status.HTTP_201_CREATED)
+async def save_shared_notulen(
+    notulen_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    user_id: uuid.UUID = Depends(get_current_user_id),
+):
+    """
+    Menyalin notulen utuh (termasuk transcript, summary, dll) yang dibagikan via Chat ke arsip user.
+    """
+    result = await db.execute(select(Notulen).where(Notulen.id == notulen_id))
+    original = result.scalar_one_or_none()
+    
+    if not original:
+        raise HTTPException(status_code=404, detail="Notulen tidak ditemukan atau sudah dihapus.")
+        
+    # Duplicate
+    duplicate = Notulen(
+        user_id=user_id,
+        title=original.title,
+        transcript=original.transcript,
+        meeting_date=original.meeting_date,
+        duration_seconds=original.duration_seconds,
+        audio_url=original.audio_url,
+        summary=original.summary,
+        action_items=original.action_items,
+    )
+    db.add(duplicate)
+    await db.commit()
+    await db.refresh(duplicate)
+    return duplicate
+
+
 @router.post("/refine", response_model=NotulenRefineResponse)
 async def refine_raw_transcript(
     payload: NotulenRefineRequest,
