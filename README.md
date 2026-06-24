@@ -1,6 +1,9 @@
 # Smart-WorkLife Backend API
 
-Backend API untuk aplikasi **Smart-WorkLife** — asisten produktivitas dan kesehatan terpadu yang dirancang khusus untuk pekerja kantoran guna mengatasi burnout dan menjaga gaya hidup sehat.
+Repositori ini merupakan backend API untuk aplikasi Smart-WorkLife, sedangkan untuk aplikasi mobile (frontend) dapat diakses melalui repositori berikut:
+https://github.com/nisszhra/smartworklife_mobile.git
+
+Backend API ini dirancang sebagai layanan utama yang menangani logika bisnis, manajemen data, serta integrasi AI untuk mendukung fitur produktivitas dan kesehatan pada aplikasi Smart-WorkLife.
 
 ## 🚀 Fitur Utama
 
