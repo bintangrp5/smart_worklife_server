@@ -33,3 +33,14 @@ async def todo_preview(
 ):
     """Preview 5 tugas pending hari ini untuk widget di Home Screen."""
     return await crud.get_todo_preview(db, user_id)
+
+
+@router.get("/leaderboard")
+async def get_leaderboard(
+    db: AsyncSession = Depends(get_db),
+    user_id: uuid.UUID = Depends(get_current_user_id),
+):
+    """
+    Get leaderboard of all users ranked by total points.
+    """
+    return await crud.get_leaderboard(db)
