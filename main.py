@@ -9,7 +9,7 @@ from app.database import init_db
 from app.models import *  # noqa: F401, F403 — populate SQLAlchemy metadata
 
 # Routers
-from app.routers import auth, todo, pomodoro, health, stretching, notulen, dashboard
+from app.routers import auth, todo, pomodoro, health, stretching, notulen, dashboard, chat
 from fastapi.staticfiles import StaticFiles
 import os
 
@@ -84,6 +84,7 @@ app.include_router(health.router,      prefix=PREFIX)
 app.include_router(stretching.router,  prefix=PREFIX)
 app.include_router(notulen.router,     prefix=PREFIX)
 app.include_router(dashboard.router,   prefix=PREFIX)
+app.include_router(chat.router,        prefix=PREFIX)
 
 # Mount static folder
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")

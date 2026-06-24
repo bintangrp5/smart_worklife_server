@@ -10,6 +10,7 @@ from app.models.stretching import StretchingExercise, StretchingSession, Stretch
 from app.models.health import BMIProfile, HydrationSetting, HydrationLog
 from app.models.todo import Todo
 from app.models.notulen import Notulen
+from app.models.chat import Friendship, ChatMessage
 
 __all__ = [
     "User",
@@ -24,4 +25,6 @@ __all__ = [
     "HydrationLog",
     "Todo",
     "Notulen",
+    "Friendship",
+    "ChatMessage",
 ]
