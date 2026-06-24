@@ -122,32 +122,46 @@ async def get_todo_preview(db: AsyncSession, user_id: uuid.UUID) -> list[Todo]:
     return result.scalars().all()
 
 
-async def get_leaderboard(db: AsyncSession) -> list[dict]:
+async def get_leaderboard(db: AsyncSession, target_date=None) -> list[dict]:
     from app.models.user import User
+    if target_date is None:
+        target_date = datetime.now(timezone.utc).date()
 
-    # 1. Get total pomodoro seconds per user
+    # 1. Get total pomodoro seconds per user TODAY
     pomodoro_res = await db.execute(
         select(
             PomodoroSession.user_id,
             func.coalesce(func.sum(PomodoroSession.actual_duration_seconds), 0)
-        ).where(PomodoroSession.status == "completed").group_by(PomodoroSession.user_id)
+        ).where(
+            and_(
+                PomodoroSession.status == "completed",
+                PomodoroSession.session_date == target_date
+            )
+        ).group_by(PomodoroSession.user_id)
     )
     pomodoro_map = {row[0]: row[1] for row in pomodoro_res.all()}
 
-    # 2. Get done todos per user
+    # 2. Get done todos per user TODAY
     todo_res = await db.execute(
         select(
             Todo.user_id,
             func.count(Todo.id)
-        ).where(Todo.status == "done").group_by(Todo.user_id)
+        ).where(
+            and_(
+                Todo.status == "done",
+                Todo.task_date == target_date
+            )
+        ).group_by(Todo.user_id)
     )
     todo_map = {row[0]: row[1] for row in todo_res.all()}
 
-    # 3. Get hydration ml per user
+    # 3. Get hydration ml per user TODAY
     hydration_res = await db.execute(
         select(
             HydrationLog.user_id,
             func.coalesce(func.sum(HydrationLog.amount_ml), 0.0)
+        ).where(
+            HydrationLog.log_date == target_date
         ).group_by(HydrationLog.user_id)
     )
     hydration_map = {row[0]: row[1] for row in hydration_res.all()}
