@@ -22,7 +22,7 @@ const Login = () => {
       const r = await fetch('/admin/login', { method: 'POST', body: fd });
       if (r.ok) {
         // Success
-        setTimeout(() => navigate('/dashboard'), 500);
+        setTimeout(() => navigate('/admin/dashboard'), 500);
       } else {
         setError(true);
         setLoading(false);
