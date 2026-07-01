@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 
 const Dashboard = () => {
   const [activePage, setActivePage] = useState('overview');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const navigate = useNavigate();
 
   const renderPage = () => {
@@ -20,41 +21,55 @@ const Dashboard = () => {
   };
 
   const handleLogout = () => {
-    // Basic redirect for logout, or call API if needed
     window.location.href = '/admin/logout';
+  };
+
+  const handleNavClick = (page) => {
+    setActivePage(page);
+    setIsSidebarOpen(false);
   };
 
   return (
     <>
-      <aside className="sidebar">
+      <div className="mobile-header">
+        <button className="btn-hamburger" onClick={() => setIsSidebarOpen(true)}>☰</button>
+        <div className="mobile-title">Developer Dashboard</div>
+      </div>
+      
+      {isSidebarOpen && <div className="sidebar-overlay" onClick={() => setIsSidebarOpen(false)}></div>}
+
+      <aside className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
         <div className="sidebar-brand">
           <img src="/static/logo.png" className="brand-icon" alt="Logo" />
-          <div className="brand-name">Smart-WorkLife</div>
-          <div className="brand-sub">Developer Dashboard</div>
+          <div className="brand-text">
+            <div className="brand-name">Smart-WorkLife</div>
+            <div className="brand-sub">Developer Dashboard</div>
+          </div>
+          <button className="btn-close" onClick={() => setIsSidebarOpen(false)}>✕</button>
         </div>
         <nav>
           <span className="nav-sep">Menu</span>
           <button 
             className={`nav-item ${activePage === 'overview' ? 'active' : ''}`}
-            onClick={() => setActivePage('overview')}
+            onClick={() => handleNavClick('overview')}
           >
             📊 Overview &amp; Metrik
           </button>
           <button 
             className={`nav-item ${activePage === 'users' ? 'active' : ''}`}
-            onClick={() => setActivePage('users')}
+            onClick={() => handleNavClick('users')}
           >
             👥 Data Pengguna
           </button>
           <button 
             className={`nav-item ${activePage === 'ratings' ? 'active' : ''}`}
-            onClick={() => setActivePage('ratings')}
+            onClick={() => handleNavClick('ratings')}
           >
             ⭐ Feedback &amp; Rating
           </button>
           <button 
             className={`nav-item ${activePage === 'health' ? 'active' : ''}`}
-            onClick={() => setActivePage('health')}
+            onClick={() => handleNavClick('health')}
           >
             🖥️ System Health
           </button>
