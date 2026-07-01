@@ -58,11 +58,19 @@ async def root():
     return RedirectResponse("/admin/login")
 
 
+def get_react_app():
+    try:
+        with open("admin_dist/index.html", "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read())
+    except FileNotFoundError:
+        return HTMLResponse(content="<h1>Admin Frontend is building...</h1>")
+
+
 @router.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request):
     if _check(request):
         return RedirectResponse("/admin/dashboard")
-    return templates.TemplateResponse(request=request, name="admin/login.html")
+    return get_react_app()
 
 
 @router.post("/login")
@@ -88,7 +96,7 @@ async def logout():
 async def dashboard(request: Request):
     if not _check(request):
         return RedirectResponse("/admin/login", status_code=302)
-    return templates.TemplateResponse(request=request, name="admin/dashboard.html")
+    return get_react_app()
 
 
 # ── JSON API (dipanggil oleh JS di dashboard.html) ─────────────────────
