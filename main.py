@@ -59,11 +59,15 @@ app.include_router(berita.router,      prefix=PREFIX)
 app.include_router(rating.router,      prefix=PREFIX)
 app.include_router(admin.router)
 
-# Static files hanya untuk local dev (avatar sudah disimpan di Cloudinary saat production)
-if not os.getenv("VERCEL"):
-    from fastapi.staticfiles import StaticFiles
-    if os.path.exists("uploads"):
-        app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+# Static files (uploads lokal, logo frontend)
+from fastapi.staticfiles import StaticFiles
+
+if not os.getenv("VERCEL") and os.path.exists("uploads"):
+    app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+
+# Mount /static agar logo dan asset frontend bisa diakses
+if os.path.exists("static"):
+    app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
 # ── Cron Endpoint (pengganti background task) ─────────────────────────
