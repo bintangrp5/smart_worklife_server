@@ -150,7 +150,7 @@ const Overview = () => {
           </div>
         </div>
         <div className="chart-card">
-          <div className="chart-title">🍅 Tren Sesi Pomodoro Selesai (14 Hari)</div>
+          <div className="chart-title">⏱️ Tren Sesi Pomodoro Selesai (14 Hari)</div>
           <div className="chart-wrap">
             <canvas ref={chartPomodoroRef}></canvas>
           </div>
