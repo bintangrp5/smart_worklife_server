@@ -69,6 +69,10 @@ if not os.getenv("VERCEL") and os.path.exists("uploads"):
 if os.path.exists("static"):
     app.mount("/static", StaticFiles(directory="static"), name="static")
 
+# Mount /admin_assets untuk melayani file statis React (Vite Build)
+if os.path.exists("admin_dist"):
+    app.mount("/admin_assets", StaticFiles(directory="admin_dist"), name="admin_assets")
+
 
 # ── Cron Endpoint (pengganti background task) ─────────────────────────
 # Endpoint ini dipanggil otomatis setiap jam oleh Vercel Cron Job
