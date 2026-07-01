@@ -270,24 +270,37 @@ class AuthService:
         from app.models.user import User
         from app.models.health import BMIProfile
         from fastapi import HTTPException
+        import cloudinary
+        import cloudinary.uploader
         import os
-        import time
+        import io
 
         result = await db.execute(select(User).where(User.id == user_id))
         user = result.scalars().first()
         if not user:
             raise HTTPException(status_code=404, detail="User tidak ditemukan.")
 
-        # Save file to disk
-        ext = file.filename.split('.')[-1] if '.' in file.filename else 'jpg'
-        filename = f"{user_id}_{int(time.time())}.{ext}"
-        filepath = os.path.join("uploads", "avatars", filename)
+        # Konfigurasi Cloudinary dari environment variables
+        cloudinary.config(
+            cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
+            api_key=os.getenv("CLOUDINARY_API_KEY"),
+            api_secret=os.getenv("CLOUDINARY_API_SECRET"),
+            secure=True,
+        )
 
         contents = await file.read()
-        with open(filepath, "wb") as f:
-            f.write(contents)
 
-        user.avatar_url = f"/uploads/avatars/{filename}"
+        # Upload ke Cloudinary (overwrite jika sudah ada avatar sebelumnya)
+        upload_result = cloudinary.uploader.upload(
+            io.BytesIO(contents),
+            folder="smartworklife/avatars",
+            public_id=str(user_id),
+            overwrite=True,
+            resource_type="image",
+        )
+        avatar_url = upload_result.get("secure_url")
+
+        user.avatar_url = avatar_url
         await db.commit()
         await db.refresh(user)
 

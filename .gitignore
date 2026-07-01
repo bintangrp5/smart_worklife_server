@@ -54,3 +54,4 @@ media/
 
 # Migrations (kalau pakai Alembic, opsional)
 versions/
+.vercel
