@@ -1,46 +1,17 @@
-import asyncio
-from contextlib import asynccontextmanager
+import os
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.database import init_db
 from app.models import *  # noqa: F401, F403 — populate SQLAlchemy metadata
 
 # Routers
 from app.routers import auth, todo, pomodoro, health, stretching, notulen, dashboard, chat, berita, rating
-from fastapi.staticfiles import StaticFiles
-import os
 
-os.makedirs("uploads/avatars", exist_ok=True)
-
-
-async def deletion_cleanup_loop():
-    """
-    Loop background untuk memicu pembersihan akun yang terjadwal dihapus (Pending Deletion).
-    Dijalankan setiap 1 jam sekali.
-    """
-    # Delay sedikit agar server siap dulu
-    await asyncio.sleep(5)
-    while True:
-        try:
-            from app.tasks.account_cleanup import clean_pending_deletions
-            await clean_pending_deletions()
-        except Exception as e:
-            print(f"[CLEANUP LOOP ERROR] {e}")
-        # Run every 1 hour (3600 seconds)
-        await asyncio.sleep(3600)
-
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    await init_db()
-    # Mulai task background pembersihan akun
-    cleanup_task = asyncio.create_task(deletion_cleanup_loop())
-    yield
-    # Hentikan task saat aplikasi mati
-    cleanup_task.cancel()
+# Buat folder uploads hanya jika berjalan di local (bukan Vercel)
+if not os.getenv("VERCEL"):
+    os.makedirs("uploads/avatars", exist_ok=True)
 
 
 app = FastAPI(
@@ -52,13 +23,12 @@ app = FastAPI(
         "Sertakan token pada header `Authorization: Bearer <TOKEN>`."
     ),
     version="1.0.0",
-    lifespan=lifespan,
 )
 
 # ── CORS ──────────────────────────────────────────────────────────────
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Ganti dengan domain Flutter/mobile saat production
+    allow_origins=["*"],  # Ganti dengan domain spesifik saat production
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -88,8 +58,26 @@ app.include_router(chat.router,        prefix=PREFIX)
 app.include_router(berita.router,      prefix=PREFIX)
 app.include_router(rating.router,      prefix=PREFIX)
 
-# Mount static folder
-app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+# Static files hanya untuk local dev (avatar sudah disimpan di Cloudinary saat production)
+if not os.getenv("VERCEL"):
+    from fastapi.staticfiles import StaticFiles
+    if os.path.exists("uploads"):
+        app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+
+
+# ── Cron Endpoint (pengganti background task) ─────────────────────────
+# Endpoint ini dipanggil otomatis setiap jam oleh Vercel Cron Job
+# (lihat konfigurasi "crons" di vercel.json)
+@app.get("/api/v1/cron/cleanup-pending-deletions", tags=["Cron Jobs"])
+async def cron_cleanup():
+    """
+    Membersihkan akun yang telah melewati masa Pending Deletion 14 hari.
+    Dipanggil otomatis oleh Vercel Cron Job setiap jam (lihat vercel.json).
+    """
+    from app.tasks.account_cleanup import clean_pending_deletions
+    await clean_pending_deletions()
+    return {"status": "ok", "message": "Cleanup selesai dijalankan."}
+
 
 # ── Root & Health Check ───────────────────────────────────────────────
 @app.get("/", tags=["Root"])
