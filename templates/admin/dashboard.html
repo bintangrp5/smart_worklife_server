@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Smart-WorkLife | Developer Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0f0c29;--sidebar:#1a1730;--card:rgba(255,255,255,.04);--border:rgba(255,255,255,.08);--text:#f1f5f9;--muted:rgba(255,255,255,.4);--accent:#4F46E5;--accent2:#7C3AED;--green:#10B981;--yellow:#F59E0B;--red:#EF4444;--blue:#3B82F6}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh}
+
+/* ── Sidebar ── */
+.sidebar{width:240px;min-height:100vh;background:var(--sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;z-index:100}
+.sidebar-brand{padding:24px 20px;border-bottom:1px solid var(--border)}
+.brand-icon{width:40px;height:40px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:10px;display:inline-flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:8px}
+.brand-name{font-size:15px;font-weight:700;color:var(--text)}
+.brand-sub{font-size:11px;color:var(--muted)}
+nav{flex:1;padding:16px 12px;display:flex;flex-direction:column;gap:2px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;cursor:pointer;color:var(--muted);font-size:13px;font-weight:500;transition:all .2s;border:none;background:none;width:100%;text-align:left}
+.nav-item:hover{background:rgba(255,255,255,.05);color:var(--text)}
+.nav-item.active{background:rgba(79,70,229,.15);color:#818CF8;border-left:3px solid var(--accent)}
+.nav-sep{font-size:10px;color:rgba(255,255,255,.2);letter-spacing:1px;padding:12px 12px 6px;text-transform:uppercase}
+.sidebar-footer{padding:16px;border-top:1px solid var(--border)}
+.btn-logout{width:100%;padding:9px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);border-radius:10px;color:#FCA5A5;font-size:13px;font-family:'Inter',sans-serif;cursor:pointer;transition:all .2s}
+.btn-logout:hover{background:rgba(239,68,68,.2)}
+
+/* ── Main ── */
+.main{margin-left:240px;flex:1;padding:28px 32px;max-width:calc(100vw - 240px)}
+.page{display:none}.page.active{display:block}
+.page-title{font-size:22px;font-weight:700;color:var(--text);margin-bottom:4px}
+.page-sub{font-size:13px;color:var(--muted);margin-bottom:24px}
+hr.div{border:none;border-top:1px solid var(--border);margin:20px 0}
+
+/* ── KPI Cards ── */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.kpi-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;position:relative;overflow:hidden;transition:transform .2s}
+.kpi-card:hover{transform:translateY(-2px)}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.kpi-card:nth-child(1)::before{background:linear-gradient(90deg,var(--accent),var(--accent2))}
+.kpi-card:nth-child(2)::before{background:linear-gradient(90deg,var(--green),#059669)}
+.kpi-card:nth-child(3)::before{background:linear-gradient(90deg,var(--blue),#2563EB)}
+.kpi-card:nth-child(4)::before{background:linear-gradient(90deg,var(--yellow),#D97706)}
+.kpi-label{font-size:12px;color:var(--muted);margin-bottom:8px}
+.kpi-value{font-size:28px;font-weight:700;color:var(--text)}
+.kpi-delta{font-size:12px;margin-top:6px;color:var(--green)}
+.kpi-delta.neg{color:var(--red)}
+.kpi-icon{position:absolute;top:16px;right:16px;font-size:28px;opacity:.3}
+
+/* ── Charts ── */
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
+.chart-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px}
+.chart-title{font-size:14px;font-weight:600;color:var(--text);margin-bottom:16px}
+.chart-wrap{position:relative;height:200px}
+
+/* ── Feature bars ── */
+.feature-list{display:flex;flex-direction:column;gap:12px}
+.feature-item{display:flex;align-items:center;gap:12px}
+.feature-name{font-size:13px;color:var(--text);width:160px;flex-shrink:0}
+.feature-bar-wrap{flex:1;background:rgba(255,255,255,.05);border-radius:6px;height:8px;overflow:hidden}
+.feature-bar{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:6px;transition:width .8s ease}
+.feature-val{font-size:12px;color:var(--muted);width:40px;text-align:right}
+
+/* ── Table ── */
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:10px 12px;color:var(--muted);font-weight:500;border-bottom:1px solid var(--border);font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+td{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.04);color:var(--text)}
+tr:hover td{background:rgba(255,255,255,.03)}
+.badge-ok{background:rgba(16,185,129,.15);color:#34D399;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.badge-no{background:rgba(239,68,68,.1);color:#FCA5A5;padding:2px 10px;border-radius:20px;font-size:11px}
+
+/* ── Health ── */
+.health-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.health-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;text-align:center}
+.health-dot{width:14px;height:14px;border-radius:50%;display:inline-block;margin-bottom:8px}
+.dot-green{background:var(--green);box-shadow:0 0 12px var(--green)}
+.dot-red{background:var(--red);box-shadow:0 0 12px var(--red)}
+.health-name{font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px}
+.health-status{font-size:12px;color:var(--muted)}
+
+/* ── Quick Links ── */
+.link-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.link-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;text-decoration:none;display:flex;align-items:center;gap:12px;transition:all .2s}
+.link-card:hover{background:rgba(79,70,229,.1);border-color:rgba(79,70,229,.3);transform:translateY(-2px)}
+.link-icon{font-size:24px}
+.link-label{font-size:13px;font-weight:600;color:var(--text)}
+.link-sub{font-size:11px;color:var(--muted)}
+
+/* ── Spinner ── */
+.spin{text-align:center;color:var(--muted);padding:40px;font-size:13px}
+
+/* ── Ratings ── */
+.star{color:#F59E0B}
+</style>
+</head>
+<body>
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-icon">🚀</div>
+    <div class="brand-name">Smart-WorkLife</div>
+    <div class="brand-sub">Developer Dashboard</div>
+  </div>
+  <nav>
+    <span class="nav-sep">Menu</span>
+    <button class="nav-item active" onclick="show('overview')">📊 Overview &amp; Metrik</button>
+    <button class="nav-item" onclick="show('users')">👥 Data Pengguna</button>
+    <button class="nav-item" onclick="show('ratings')">⭐ Feedback &amp; Rating</button>
+    <button class="nav-item" onclick="show('health')">🖥️ System Health</button>
+    <span class="nav-sep">Links</span>
+    <a class="nav-item" href="/docs" target="_blank">📋 API Docs (Swagger)</a>
+    <a class="nav-item" href="/health" target="_blank">❤️ Health Check</a>
+    <a class="nav-item" href="/redoc" target="_blank">📄 ReDoc</a>
+  </nav>
+  <div class="sidebar-footer">
+    <button class="btn-logout" onclick="location.href='/admin/logout'">🚪 Logout</button>
+  </div>
+</aside>
+
+<!-- Main -->
+<main class="main">
+
+  <!-- ── Overview ── -->
+  <div class="page active" id="page-overview">
+    <div class="page-title">📊 Overview &amp; Metrik Aplikasi</div>
+    <div class="page-sub">Ringkasan performa real-time Smart-WorkLife</div>
+    <hr class="div">
+
+    <div class="kpi-grid" id="kpi-grid"><div class="spin">⏳ Memuat data...</div></div>
+
+    <div class="chart-grid">
+      <div class="chart-card">
+        <div class="chart-title">📅 Registrasi User Baru (7 Hari)</div>
+        <div class="chart-wrap"><canvas id="chartNewUsers"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">🍅 Tren Sesi Pomodoro Selesai (14 Hari)</div>
+        <div class="chart-wrap"><canvas id="chartPomodoro"></canvas></div>
+      </div>
+    </div>
+
+    <div class="chart-card" style="margin-bottom:24px">
+      <div class="chart-title">🛠️ Penggunaan Fitur Bulan Ini</div>
+      <div class="feature-list" id="feature-list"><div class="spin">⏳ Memuat...</div></div>
+    </div>
+  </div>
+
+  <!-- ── Users ── -->
+  <div class="page" id="page-users">
+    <div class="page-title">👥 Data Pengguna Terdaftar</div>
+    <div class="page-sub">15 pengguna terbaru yang mendaftar</div>
+    <hr class="div">
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px">
+      <div class="table-wrap">
+        <table id="user-table">
+          <thead><tr><th>Nama</th><th>Email</th><th>Gender</th><th>Industri</th><th>Bergabung</th><th>Status</th></tr></thead>
+          <tbody><tr><td colspan="6" style="text-align:center;color:var(--muted);padding:30px">⏳ Memuat...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Ratings ── -->
+  <div class="page" id="page-ratings">
+    <div class="page-title">⭐ Feedback &amp; Rating Pengguna</div>
+    <div class="page-sub">Kepuasan pengguna per fitur</div>
+    <hr class="div">
+    <div id="ratings-content" style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px">
+      <div class="spin">⏳ Memuat...</div>
+    </div>
+  </div>
+
+  <!-- ── Health ── -->
+  <div class="page" id="page-health">
+    <div class="page-title">🖥️ System Health &amp; Status</div>
+    <div class="page-sub">Status koneksi layanan backend</div>
+    <hr class="div">
+    <div class="health-grid" id="health-grid"><div class="spin">⏳ Memuat...</div></div>
+    <hr class="div">
+    <div class="page-title" style="font-size:16px;margin-bottom:12px">🔗 Quick Links</div>
+    <div class="link-grid">
+      <a href="/docs" target="_blank" class="link-card"><div class="link-icon">📋</div><div><div class="link-label">Swagger UI</div><div class="link-sub">API Documentation</div></div></a>
+      <a href="/health" target="_blank" class="link-card"><div class="link-icon">❤️</div><div><div class="link-label">Health Check</div><div class="link-sub">Backend status</div></div></a>
+      <a href="/redoc" target="_blank" class="link-card"><div class="link-icon">📄</div><div><div class="link-label">ReDoc</div><div class="link-sub">API Reference</div></div></a>
+    </div>
+  </div>
+
+</main>
+
+<script>
+const PAGES = ['overview','users','ratings','health'];
+let chartsInit = false;
+
+function show(page) {
+  PAGES.forEach(p => {
+    document.getElementById('page-'+p).classList.remove('active');
+    document.querySelectorAll('.nav-item').forEach((n,i)=>n.classList.remove('active'));
+  });
+  document.getElementById('page-'+page).classList.add('active');
+  document.querySelectorAll('.nav-item')[PAGES.indexOf(page)]?.classList.add('active');
+  if(page==='overview' && !chartsInit){ loadOverview(); chartsInit=true; }
+  if(page==='users') loadUsers();
+  if(page==='ratings') loadRatings();
+  if(page==='health') loadHealth();
+}
+
+// ── KPI ──
+async function loadOverview(){
+  const stats = await fetch('/admin/api/stats').then(r=>r.json());
+  const g = document.getElementById('kpi-grid');
+  if(stats.error){ g.innerHTML=`<p style="color:var(--red)">${stats.error}</p>`; return; }
+  const dSign = stats.dau_delta>=0?'+':'';
+  g.innerHTML = `
+    <div class="kpi-card"><div class="kpi-icon">👥</div><div class="kpi-label">Total Pengguna Aktif</div><div class="kpi-value">${stats.total_users.toLocaleString()}</div><div class="kpi-delta">+${stats.new_users_week} minggu ini</div></div>
+    <div class="kpi-card"><div class="kpi-icon">🔥</div><div class="kpi-label">DAU (Hari Ini)</div><div class="kpi-value">${stats.dau.toLocaleString()}</div><div class="kpi-delta ${stats.dau_delta<0?'neg':''}">${dSign}${stats.dau_delta} dari kemarin</div></div>
+    <div class="kpi-card"><div class="kpi-icon">📅</div><div class="kpi-label">MAU (Bulanan)</div><div class="kpi-value">${stats.mau.toLocaleString()}</div><div class="kpi-delta">Bulan ini</div></div>
+    <div class="kpi-card"><div class="kpi-icon">🆕</div><div class="kpi-label">User Baru (7 Hari)</div><div class="kpi-value">${stats.new_users_week.toLocaleString()}</div><div class="kpi-delta">Minggu ini</div></div>`;
+
+  // Charts
+  const [nu, pm, ft] = await Promise.all([
+    fetch('/admin/api/chart/new-users').then(r=>r.json()),
+    fetch('/admin/api/chart/pomodoro').then(r=>r.json()),
+    fetch('/admin/api/features').then(r=>r.json()),
+  ]);
+
+  new Chart(document.getElementById('chartNewUsers'),{type:'bar',data:{labels:nu.labels,datasets:[{data:nu.values,backgroundColor:'rgba(79,70,229,.6)',borderColor:'#4F46E5',borderWidth:1,borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'rgba(255,255,255,.4)',font:{size:11}}},y:{ticks:{color:'rgba(255,255,255,.4)',font:{size:11}},grid:{color:'rgba(255,255,255,.05)'}}}}});
+
+  new Chart(document.getElementById('chartPomodoro'),{type:'line',data:{labels:pm.labels,datasets:[{data:pm.values,borderColor:'#10B981',backgroundColor:'rgba(16,185,129,.1)',fill:true,tension:.4,pointRadius:4,pointBackgroundColor:'#10B981'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'rgba(255,255,255,.4)',font:{size:11}}},y:{ticks:{color:'rgba(255,255,255,.4)',font:{size:11}},grid:{color:'rgba(255,255,255,.05)'}}}}});
+
+  const maxVal = Math.max(...Object.values(ft), 1);
+  const fl = document.getElementById('feature-list');
+  fl.innerHTML = Object.entries(ft).map(([k,v])=>`
+    <div class="feature-item">
+      <div class="feature-name">${k}</div>
+      <div class="feature-bar-wrap"><div class="feature-bar" style="width:${Math.round(v/maxVal*100)}%"></div></div>
+      <div class="feature-val">${v}</div>
+    </div>`).join('');
+}
+
+// ── Users ──
+async function loadUsers(){
+  const data = await fetch('/admin/api/users').then(r=>r.json());
+  const tbody = document.querySelector('#user-table tbody');
+  if(!Array.isArray(data)){ tbody.innerHTML=`<tr><td colspan="6" style="color:var(--red)">Error: ${data.error}</td></tr>`; return; }
+  tbody.innerHTML = data.map(u=>`<tr>
+    <td>${u.full_name}</td><td style="color:var(--muted)">${u.email}</td>
+    <td>${u.gender}</td><td>${u.industry}</td><td style="color:var(--muted)">${u.joined}</td>
+    <td><span class="${u.is_verified?'badge-ok':'badge-no'}">${u.is_verified?'✅ Terverifikasi':'⏳ Belum'}</span></td>
+  </tr>`).join('');
+}
+
+// ── Ratings ──
+async function loadRatings(){
+  const data = await fetch('/admin/api/ratings').then(r=>r.json());
+  const el = document.getElementById('ratings-content');
+  if(!Array.isArray(data)||data.length===0){
+    el.innerHTML=`<div style="text-align:center;color:var(--muted);padding:32px">
+      <div style="font-size:40px;margin-bottom:12px">⭐</div>
+      <div style="font-size:15px;font-weight:600;margin-bottom:8px">Belum ada rating</div>
+      <div style="font-size:13px">Data rating akan muncul setelah pengguna memberi ulasan dari aplikasi Flutter</div>
+    </div>`;
+    return;
+  }
+  el.innerHTML = data.map(r=>{
+    const stars='⭐'.repeat(Math.round(r.avg_rating));
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border)">
+      <div><div style="font-size:14px;font-weight:600">${r.feature}</div><div style="font-size:12px;color:var(--muted)">${r.total} ulasan</div></div>
+      <div style="text-align:right"><div>${stars}</div><div style="font-size:13px;color:var(--yellow);font-weight:600">${r.avg_rating}/5.0</div></div>
+    </div>`;
+  }).join('');
+}
+
+// ── Health ──
+async function loadHealth(){
+  const data = await fetch('/admin/api/health').then(r=>r.json());
+  document.getElementById('health-grid').innerHTML = [
+    {k:'postgresql', label:'PostgreSQL (Neon)', icon:'🐘'},
+    {k:'backend',    label:'FastAPI Backend',   icon:'⚡'},
+    {k:'cloudinary', label:'Cloudinary CDN',    icon:'☁️'},
+  ].map(({k,label,icon})=>{
+    const ok = data[k];
+    return `<div class="health-card">
+      <div class="health-dot ${ok?'dot-green':'dot-red'}"></div>
+      <div style="font-size:24px;margin-bottom:8px">${icon}</div>
+      <div class="health-name">${label}</div>
+      <div class="health-status">${ok?'🟢 Terhubung & Normal':'🔴 Gagal Terhubung'}</div>
+    </div>`;
+  }).join('');
+}
+
+// Init
+loadOverview(); chartsInit=true;
+</script>
+</body>
+</html>
