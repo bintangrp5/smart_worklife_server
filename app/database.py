@@ -4,6 +4,7 @@ Uses SQLAlchemy async with PostgreSQL via asyncpg.
 """
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.pool import NullPool
 from dotenv import load_dotenv
 import os
 
@@ -14,12 +15,23 @@ DATABASE_URL = os.getenv(
     "postgresql+asyncpg://postgres:postgres@localhost:5432/smartworklife"
 )
 
-engine = create_async_engine(
-    DATABASE_URL,
-    echo=True,
-    pool_pre_ping=True,
-    pool_recycle=3600,
-)
+# Di Vercel (serverless), gunakan NullPool agar tidak ada persistent connection pool
+# yang menyebabkan function hang. Di local, gunakan pool normal.
+IS_VERCEL = bool(os.getenv("VERCEL"))
+
+if IS_VERCEL:
+    engine = create_async_engine(
+        DATABASE_URL,
+        echo=False,
+        poolclass=NullPool,
+    )
+else:
+    engine = create_async_engine(
+        DATABASE_URL,
+        echo=True,
+        pool_pre_ping=True,
+        pool_recycle=3600,
+    )
 
 async_session = async_sessionmaker(
     engine,

@@ -1,0 +1,37 @@
+# File-file yang tidak perlu di-deploy ke Vercel (hanya untuk FastAPI backend)
+app.py
+streamlit_app.py
+
+# Development & testing files
+venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# Local only
+.env
+.env.*
+
+# Migration & debug scripts (tidak dibutuhkan saat runtime)
+migrate_*.py
+check_table.py
+create_tables.py
+update_db.py
+seed.py
+test_*.py
+dev_get_otp.py
+get_user_token.py
+
+# Upload folder (avatar sudah di Cloudinary)
+uploads/
+
+# Alembic (tidak dibutuhkan di Vercel)
+alembic.ini
+
+# Data files
+*.sqlite3
+*.db
+
+# IDE
+.vscode/
+.idea/

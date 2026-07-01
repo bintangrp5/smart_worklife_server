@@ -7,7 +7,7 @@ from fastapi.responses import JSONResponse
 from app.models import *  # noqa: F401, F403 — populate SQLAlchemy metadata
 
 # Routers
-from app.routers import auth, todo, pomodoro, health, stretching, notulen, dashboard, chat, berita, rating
+from app.routers import auth, todo, pomodoro, health, stretching, notulen, dashboard, chat, berita, rating, admin
 
 # Buat folder uploads hanya jika berjalan di local (bukan Vercel)
 if not os.getenv("VERCEL"):
@@ -57,6 +57,7 @@ app.include_router(dashboard.router,   prefix=PREFIX)
 app.include_router(chat.router,        prefix=PREFIX)
 app.include_router(berita.router,      prefix=PREFIX)
 app.include_router(rating.router,      prefix=PREFIX)
+app.include_router(admin.router)
 
 # Static files hanya untuk local dev (avatar sudah disimpan di Cloudinary saat production)
 if not os.getenv("VERCEL"):
