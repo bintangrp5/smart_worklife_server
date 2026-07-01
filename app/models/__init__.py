@@ -11,6 +11,7 @@ from app.models.health import BMIProfile, HydrationSetting, HydrationLog
 from app.models.todo import Todo
 from app.models.notulen import Notulen
 from app.models.chat import Friendship, ChatMessage
+from app.models.rating import AppRating
 
 __all__ = [
     "User",
@@ -27,4 +28,5 @@ __all__ = [
     "Notulen",
     "Friendship",
     "ChatMessage",
+    "AppRating",
 ]

@@ -8,10 +8,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.pomodoro import PomodoroSession
 from app.models.todo import Todo
 from app.models.health import HydrationLog, HydrationSetting
+from app.models.stretching import StretchingSession
 
 
 async def get_dashboard_summary(db: AsyncSession, user_id: uuid.UUID) -> dict:
     today = datetime.now(timezone.utc).date()
+    today_start = datetime.combine(today, datetime.min.time()).replace(tzinfo=timezone.utc)
+    today_end = datetime.combine(today, datetime.max.time()).replace(tzinfo=timezone.utc)
 
     # --- Pomodoro ---
     focus_result = await db.execute(
@@ -66,23 +69,38 @@ async def get_dashboard_summary(db: AsyncSession, user_id: uuid.UUID) -> dict:
     target_ml = float(setting_res.scalar() or 2000.0)
     hydration_pct = round((consumed_ml / target_ml) * 100, 1) if target_ml > 0 else 0.0
 
+    # --- Stretching ---
+    stretching_res = await db.execute(
+        select(func.count()).where(
+            and_(
+                StretchingSession.user_id == user_id,
+                StretchingSession.status == "completed",
+                StretchingSession.started_at >= today_start,
+                StretchingSession.started_at <= today_end,
+            )
+        )
+    )
+    stretching_count = int(stretching_res.scalar() or 0)
+
     # --- Points Logic ---
     focus_minutes = focus_seconds // 60
     break_minutes = break_seconds // 60
-    
+
     work_points = focus_minutes
     break_points = break_minutes
     task_points = done_todos * 10
     hydration_points = int(consumed_ml // 100)
-    
-    total_points = work_points + break_points + task_points + hydration_points
+    # Setiap sesi stretching = 15 poin exercise
+    exercise_points = stretching_count * 15
+
+    total_points = work_points + break_points + task_points + hydration_points + exercise_points
 
     # --- WLB Balance Percentages ---
-    total_wlb_activity = work_points + break_points + hydration_points
+    total_wlb_activity = work_points + break_points + exercise_points
     if total_wlb_activity > 0:
         work_pct = round((work_points / total_wlb_activity) * 100, 1)
         rest_pct = round((break_points / total_wlb_activity) * 100, 1)
-        exercise_pct = round((hydration_points / total_wlb_activity) * 100, 1)
+        exercise_pct = round((exercise_points / total_wlb_activity) * 100, 1)
     else:
         work_pct, rest_pct, exercise_pct = 0.0, 0.0, 0.0
 
@@ -109,7 +127,13 @@ async def get_dashboard_summary(db: AsyncSession, user_id: uuid.UUID) -> dict:
             "target_ml": target_ml,
             "progress_percent": hydration_pct,
         },
+        "stretching": {
+            "sessions_today": stretching_count,
+        },
     }
+
+
+
 
 
 async def get_todo_preview(db: AsyncSession, user_id: uuid.UUID) -> list[Todo]:
