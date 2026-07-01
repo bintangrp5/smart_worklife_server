@@ -189,7 +189,7 @@ def get_feature_usage():
         return int(df["total"].iloc[0]) if not df.empty else 0
 
     return pd.DataFrame({
-        "Fitur": ["🍅 Pomodoro", "✅ Smart Todo", "💧 Smart Health (Hydration)", "🎙️ Smart Notulen", "🧘 Smart Stretching"],
+        "Fitur": ["⏱️ Pomodoro", "✅ Smart Todo", "💧 Smart Health (Hydration)", "🎙️ Smart Notulen", "🧘 Smart Stretching"],
         "Penggunaan Bulan Ini": [
             safe_val(pomodoro),
             safe_val(todos_done),
@@ -347,7 +347,7 @@ if page == "📊 Overview & Metrik":
             st.info("Belum ada data registrasi minggu ini.")
 
     with col_right:
-        st.subheader("🍅 Tren Sesi Pomodoro Selesai (14 Hari)")
+        st.subheader("⏱️ Tren Sesi Pomodoro Selesai (14 Hari)")
         df_pomo = get_pomodoro_trend()
         if not df_pomo.empty:
             st.area_chart(df_pomo["sesi_selesai"], color="#34D399")
@@ -428,7 +428,7 @@ elif page == "⭐ Feedback & Rating":
         st.caption("Tampilan ini adalah preview. Data nyata akan muncul setelah fitur rating di Flutter selesai.")
 
         dummy_ratings = {
-            "Fitur": ["Keseluruhan Aplikasi", "🍅 Pomodoro", "✅ Smart Todo", "🎙️ Smart Notulen", "🧘 Smart Stretching", "💡 Smart Insight", "💧 Smart Health"],
+            "Fitur": ["Keseluruhan Aplikasi", "⏱️ Pomodoro", "✅ Smart Todo", "🎙️ Smart Notulen", "🧘 Smart Stretching", "💡 Smart Insight", "💧 Smart Health"],
             "Rata-rata Rating (Demo)": [4.7, 4.9, 4.8, 4.2, 4.5, 4.3, 4.6],
             "Jumlah Ulasan (Demo)": [120, 95, 110, 60, 45, 55, 80]
         }

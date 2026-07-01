@@ -156,7 +156,7 @@ async def api_features(request: Request):
     if not _check(request): raise HTTPException(401)
     ms = date.today().replace(day=1)
     qs = {
-        "🍅 Pomodoro":          ("SELECT COUNT(*) as v FROM pomodoro_sessions WHERE session_date>=:ms AND status='completed'", {"ms": ms}),
+        "⏱️ Pomodoro":          ("SELECT COUNT(*) as v FROM pomodoro_sessions WHERE session_date>=:ms AND status='completed'", {"ms": ms}),
         "✅ Smart Todo":        ("SELECT COUNT(*) as v FROM todos WHERE completed_at>=:ms AND status='done'", {"ms": ms}),
         "💧 Smart Health":      ("SELECT COUNT(*) as v FROM hydration_logs WHERE log_date>=:ms", {"ms": ms}),
         "🎙️ Smart Notulen":    ("SELECT COUNT(*) as v FROM notulens WHERE created_at>=NOW()-INTERVAL '30 days'", {}),
