@@ -71,7 +71,7 @@ async def get_dashboard_summary(db: AsyncSession, user_id: uuid.UUID) -> dict:
 
     # --- Stretching ---
     stretching_res = await db.execute(
-        select(func.count()).where(
+        select(func.count(func.distinct(StretchingSession.exercise_id))).where(
             and_(
                 StretchingSession.user_id == user_id,
                 StretchingSession.status == "completed",
@@ -80,7 +80,8 @@ async def get_dashboard_summary(db: AsyncSession, user_id: uuid.UUID) -> dict:
             )
         )
     )
-    stretching_count = int(stretching_res.scalar() or 0)
+    unique_stretching_count = int(stretching_res.scalar() or 0)
+    stretching_count = min(unique_stretching_count, 6)
 
     # --- Points Logic ---
     focus_minutes = focus_seconds // 60
@@ -90,7 +91,7 @@ async def get_dashboard_summary(db: AsyncSession, user_id: uuid.UUID) -> dict:
     break_points = break_minutes
     task_points = done_todos * 10
     hydration_points = int(consumed_ml // 100)
-    # Setiap sesi stretching = 15 poin exercise
+    # Setiap gerakan unik stretching = 15 poin exercise (maksimal 6 gerakan per hari = 90 poin)
     exercise_points = stretching_count * 15
 
     total_points = work_points + break_points + task_points + hydration_points + exercise_points
@@ -190,7 +191,24 @@ async def get_leaderboard(db: AsyncSession, target_date=None) -> list[dict]:
     )
     hydration_map = {row[0]: row[1] for row in hydration_res.all()}
 
-    # 4. Get all active users
+    # 4. Get unique stretching exercises per user TODAY
+    target_start = datetime.combine(target_date, datetime.min.time()).replace(tzinfo=timezone.utc)
+    target_end = datetime.combine(target_date, datetime.max.time()).replace(tzinfo=timezone.utc)
+    stretching_res = await db.execute(
+        select(
+            StretchingSession.user_id,
+            func.count(func.distinct(StretchingSession.exercise_id))
+        ).where(
+            and_(
+                StretchingSession.status == "completed",
+                StretchingSession.started_at >= target_start,
+                StretchingSession.started_at <= target_end
+            )
+        ).group_by(StretchingSession.user_id)
+    )
+    stretching_map = {row[0]: min(row[1], 6) for row in stretching_res.all()}
+
+    # 5. Get all active users
     users_res = await db.execute(
         select(User.id, User.full_name, User.email, User.avatar_url).where(User.is_active == True)
     )
@@ -202,9 +220,10 @@ async def get_leaderboard(db: AsyncSession, target_date=None) -> list[dict]:
         pomo_secs = pomodoro_map.get(uid, 0)
         todos_count = todo_map.get(uid, 0)
         hydro_ml = hydration_map.get(uid, 0.0)
+        stretch_count = stretching_map.get(uid, 0)
 
         # Point calculation identical to dashboard logic
-        points = (pomo_secs // 60) + (todos_count * 10) + int(hydro_ml // 100)
+        points = (pomo_secs // 60) + (todos_count * 10) + int(hydro_ml // 100) + (stretch_count * 15)
 
         leaderboard.append({
             "user_id": str(uid),

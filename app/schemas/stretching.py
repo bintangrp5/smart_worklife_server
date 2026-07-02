@@ -20,7 +20,7 @@ class StretchingExerciseResponse(BaseModel):
 
 
 class StretchingSessionCreate(BaseModel):
-    exercise_id: uuid.UUID
+    exercise_id: str
 
 
 class StretchingRepCreate(BaseModel):
