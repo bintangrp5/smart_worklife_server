@@ -83,16 +83,38 @@ async def get_dashboard_summary(db: AsyncSession, user_id: uuid.UUID) -> dict:
     unique_stretching_count = int(stretching_res.scalar() or 0)
     stretching_count = min(unique_stretching_count, 6)
 
-    # --- Points Logic ---
-    focus_minutes = focus_seconds // 60
-    break_minutes = break_seconds // 60
+    # --- Pomodoro Counts for Points ---
+    focus_count_res = await db.execute(
+        select(func.count(PomodoroSession.id)).where(
+            and_(
+                PomodoroSession.user_id == user_id,
+                PomodoroSession.session_date == today,
+                PomodoroSession.session_type == "focus",
+                PomodoroSession.status == "completed",
+            )
+        )
+    )
+    focus_count = focus_count_res.scalar() or 0
 
-    work_points = focus_minutes
-    break_points = break_minutes
+    break_count_res = await db.execute(
+        select(func.count(PomodoroSession.id)).where(
+            and_(
+                PomodoroSession.user_id == user_id,
+                PomodoroSession.session_date == today,
+                PomodoroSession.session_type == "break",
+                PomodoroSession.status == "completed",
+            )
+        )
+    )
+    break_count = break_count_res.scalar() or 0
+
+    # --- Points Logic ---
+    work_points = focus_count
+    break_points = break_count
     task_points = done_todos * 10
     hydration_points = int(consumed_ml // 100)
-    # Setiap gerakan unik stretching = 15 poin exercise (maksimal 6 gerakan per hari = 90 poin)
-    exercise_points = stretching_count * 15
+    # Setiap gerakan unik stretching = 1 poin exercise (maksimal 6 gerakan per hari = 6 poin)
+    exercise_points = stretching_count * 1
 
     total_points = work_points + break_points + task_points + hydration_points + exercise_points
 
@@ -152,11 +174,11 @@ async def get_leaderboard(db: AsyncSession, target_date=None) -> list[dict]:
     if target_date is None:
         target_date = datetime.now(timezone.utc).date()
 
-    # 1. Get total pomodoro seconds per user TODAY
+    # 1. Get total pomodoro sessions per user TODAY (instead of seconds)
     pomodoro_res = await db.execute(
         select(
             PomodoroSession.user_id,
-            func.coalesce(func.sum(PomodoroSession.actual_duration_seconds), 0)
+            func.count(PomodoroSession.id)
         ).where(
             and_(
                 PomodoroSession.status == "completed",
@@ -217,13 +239,13 @@ async def get_leaderboard(db: AsyncSession, target_date=None) -> list[dict]:
     leaderboard = []
     for u in users:
         uid = u.id
-        pomo_secs = pomodoro_map.get(uid, 0)
+        pomo_sessions = pomodoro_map.get(uid, 0)
         todos_count = todo_map.get(uid, 0)
         hydro_ml = hydration_map.get(uid, 0.0)
         stretch_count = stretching_map.get(uid, 0)
 
         # Point calculation identical to dashboard logic
-        points = (pomo_secs // 60) + (todos_count * 10) + int(hydro_ml // 100) + (stretch_count * 15)
+        points = pomo_sessions + (todos_count * 10) + int(hydro_ml // 100) + stretch_count
 
         leaderboard.append({
             "user_id": str(uid),
