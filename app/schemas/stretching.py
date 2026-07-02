@@ -26,6 +26,7 @@ class StretchingSessionCreate(BaseModel):
 class StretchingSessionComplete(BaseModel):
     total_reps: Optional[int] = None
     correct_reps: Optional[int] = None
+    status: Optional[str] = None
 
 
 class StretchingRepCreate(BaseModel):

@@ -85,7 +85,11 @@ async def complete_session(
     db: AsyncSession, session: StretchingSession, data: StretchingSessionComplete = None
 ) -> StretchingSession:
     now = datetime.now(timezone.utc)
-    session.status = "completed"
+    status_val = "completed"
+    if data and data.status:
+        status_val = data.status
+
+    session.status = status_val
     session.ended_at = now
     session.duration_seconds = int((now - session.started_at).total_seconds())
 
