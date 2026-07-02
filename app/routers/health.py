@@ -79,18 +79,20 @@ async def update_hydration_settings(
 @router.post("/hydration/logs", response_model=HydrationLogResponse, status_code=status.HTTP_201_CREATED)
 async def add_water_log(
     data: HydrationLogCreate,
+    target_date: Optional[date] = None,
     db: AsyncSession = Depends(get_db),
     user_id: uuid.UUID = Depends(get_current_user_id),
 ):
-    return await crud.add_hydration_log(db, user_id, data)
+    return await crud.add_hydration_log(db, user_id, data, target_date)
 
 
 @router.get("/hydration/today", response_model=HydrationTodayResponse)
 async def get_hydration_today(
+    target_date: Optional[date] = None,
     db: AsyncSession = Depends(get_db),
     user_id: uuid.UUID = Depends(get_current_user_id),
 ):
-    return await crud.get_today_hydration(db, user_id)
+    return await crud.get_today_hydration(db, user_id, target_date)
 
 
 @router.delete("/hydration/logs/{log_id}", status_code=status.HTTP_204_NO_CONTENT)
