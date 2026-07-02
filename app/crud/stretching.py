@@ -22,9 +22,24 @@ async def get_exercises(db: AsyncSession) -> list[StretchingExercise]:
 async def create_session(
     db: AsyncSession, user_id: uuid.UUID, data: StretchingSessionCreate
 ) -> StretchingSession:
+    try:
+        real_exercise_id = uuid.UUID(data.exercise_id)
+    except ValueError:
+        # It's a string name (e.g. "Neck Tilt")
+        result = await db.execute(select(StretchingExercise).where(StretchingExercise.name.ilike(data.exercise_id)))
+        ex = result.scalars().first()
+        if ex:
+            real_exercise_id = ex.id
+        else:
+            # Create a placeholder exercise
+            ex = StretchingExercise(name=data.exercise_id, is_active=True)
+            db.add(ex)
+            await db.flush()
+            real_exercise_id = ex.id
+
     session = StretchingSession(
         user_id=user_id,
-        exercise_id=data.exercise_id,
+        exercise_id=real_exercise_id,
         status="in_progress",
         started_at=datetime.now(timezone.utc),
     )
