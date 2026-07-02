@@ -85,12 +85,17 @@ async def update_hydration_setting(
 
 # --- Hydration Log ---
 async def add_hydration_log(
-    db: AsyncSession, user_id: uuid.UUID, data: HydrationLogCreate
+    db: AsyncSession, user_id: uuid.UUID, data: HydrationLogCreate, target_date=None
 ) -> HydrationLog:
+    if target_date is None:
+        today = datetime.now(timezone.utc).date()
+    else:
+        today = target_date
+        
     log = HydrationLog(
         user_id=user_id,
         amount_ml=data.amount_ml,
-        log_date=datetime.now(timezone.utc).date(),
+        log_date=today,
     )
     db.add(log)
     await db.flush()
@@ -98,8 +103,11 @@ async def add_hydration_log(
     return log
 
 
-async def get_today_hydration(db: AsyncSession, user_id: uuid.UUID):
-    today = datetime.now(timezone.utc).date()
+async def get_today_hydration(db: AsyncSession, user_id: uuid.UUID, target_date=None):
+    if target_date is None:
+        today = datetime.now(timezone.utc).date()
+    else:
+        today = target_date
 
     logs_result = await db.execute(
         select(HydrationLog).where(
