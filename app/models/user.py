@@ -91,6 +91,10 @@ class User(Base):
     def __repr__(self) -> str:
         return f"<User(id={self.id}, email='{self.email}')>"
 
+    @property
+    def has_password(self) -> bool:
+        return self.hashed_password is not None and len(self.hashed_password) > 0
+
 
 class UserPreference(Base):
     """

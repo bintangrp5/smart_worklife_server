@@ -19,6 +19,7 @@ class UserOut(BaseModel):
     weight_kg: Optional[float] = None
     height_cm: Optional[float] = None
     avatar_url: Optional[str] = None
+    has_password: bool = False
 
     class Config:
         from_attributes = True
@@ -83,7 +84,7 @@ class GoogleAuth(BaseModel):
 
 
 class ChangePassword(BaseModel):
-    current_password: str
+    current_password: Optional[str] = None
     new_password: str = Field(..., min_length=8)
 
 
