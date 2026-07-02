@@ -79,6 +79,7 @@ class ResetPassword(BaseModel):
 
 class GoogleAuth(BaseModel):
     id_token: str
+    is_login: Optional[bool] = False
 
 
 class ChangePassword(BaseModel):
