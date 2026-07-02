@@ -12,6 +12,7 @@ from app.schemas.stretching import (
     StretchingSessionResponse,
     StretchingRepCreate,
     StretchingRepResponse,
+    StretchingSessionComplete,
 )
 
 router = APIRouter(prefix="/stretching", tags=["Smart Stretching"])
@@ -50,6 +51,7 @@ async def add_rep(
 @router.put("/sessions/{session_id}/complete", response_model=StretchingSessionResponse)
 async def complete_session(
     session_id: uuid.UUID,
+    data: StretchingSessionComplete = None,
     db: AsyncSession = Depends(get_db),
     user_id: uuid.UUID = Depends(get_current_user_id),
 ):
@@ -58,7 +60,7 @@ async def complete_session(
         raise HTTPException(status_code=404, detail="Sesi stretching tidak ditemukan.")
     if session.status != "in_progress":
         raise HTTPException(status_code=400, detail="Sesi sudah selesai atau dibatalkan.")
-    return await crud.complete_session(db, session)
+    return await crud.complete_session(db, session, data)
 
 
 @router.get("/sessions/history", response_model=list[StretchingSessionResponse])
