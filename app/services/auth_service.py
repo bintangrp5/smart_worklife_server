@@ -354,6 +354,11 @@ class AuthService:
         user = await crud_auth.get_user_by_email(db, email)
         msg = None
         if not user:
+            if data.is_login:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Akun belum terdaftar. Silakan Sign Up terlebih dahulu.",
+                )
             # Buat user baru dengan create_google_user
             user = await crud_auth.create_google_user(
                 db,
