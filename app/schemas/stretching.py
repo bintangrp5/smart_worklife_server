@@ -23,6 +23,11 @@ class StretchingSessionCreate(BaseModel):
     exercise_id: str
 
 
+class StretchingSessionComplete(BaseModel):
+    total_reps: Optional[int] = None
+    correct_reps: Optional[int] = None
+
+
 class StretchingRepCreate(BaseModel):
     rep_number: int = Field(..., ge=1)
     is_correct: bool

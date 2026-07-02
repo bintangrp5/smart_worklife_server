@@ -7,7 +7,7 @@ from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.stretching import StretchingExercise, StretchingSession, StretchingRep
-from app.schemas.stretching import StretchingSessionCreate, StretchingRepCreate
+from app.schemas.stretching import StretchingSessionCreate, StretchingRepCreate, StretchingSessionComplete
 
 
 async def get_exercises(db: AsyncSession) -> list[StretchingExercise]:
@@ -82,12 +82,18 @@ async def add_rep(
 
 
 async def complete_session(
-    db: AsyncSession, session: StretchingSession
+    db: AsyncSession, session: StretchingSession, data: StretchingSessionComplete = None
 ) -> StretchingSession:
     now = datetime.now(timezone.utc)
     session.status = "completed"
     session.ended_at = now
     session.duration_seconds = int((now - session.started_at).total_seconds())
+
+    if data:
+        if data.total_reps is not None:
+            session.total_reps = data.total_reps
+        if data.correct_reps is not None:
+            session.correct_reps = data.correct_reps
 
     total = session.total_reps or 0
     correct = session.correct_reps or 0
