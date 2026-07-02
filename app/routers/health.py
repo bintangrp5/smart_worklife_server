@@ -1,5 +1,7 @@
 """Router — Smart Health (BMI + Hydration)."""
 import uuid
+from typing import Optional
+from datetime import date
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
