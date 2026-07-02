@@ -1,15 +1,65 @@
 import uuid
-from typing import List
-from fastapi import APIRouter, Depends, HTTPException, status
+from typing import List, Dict
+from fastapi import APIRouter, Depends, HTTPException, status, WebSocket, WebSocketDisconnect, Query
 from sqlalchemy.ext.asyncio import AsyncSession
+from jose import jwt, JWTError
+import json
 
 from app.database import get_db
 from app.core.dependencies import get_current_user_id
+from app.core.config import settings
 from app.schemas.chat import UserPublic, FriendshipCreate, FriendshipResponse, FriendshipStatusUpdate, ChatMessageCreate, ChatMessageResponse, ChatMessageDeleteRequest, ChatMessageReadRequest
 from app.crud import chat as crud_chat
 from app.models.chat import FriendshipStatus
 
 router = APIRouter(prefix="/chat", tags=["chat"])
+
+# --- WebSocket Manager ---
+class ConnectionManager:
+    def __init__(self):
+        # Menyimpan websocket koneksi per user_id
+        self.active_connections: Dict[str, WebSocket] = {}
+
+    async def connect(self, websocket: WebSocket, user_id: str):
+        await websocket.accept()
+        self.active_connections[user_id] = websocket
+
+    def disconnect(self, user_id: str):
+        if user_id in self.active_connections:
+            del self.active_connections[user_id]
+
+    async def send_personal_message(self, message: str, user_id: str):
+        if user_id in self.active_connections:
+            await self.active_connections[user_id].send_text(message)
+
+manager = ConnectionManager()
+
+def verify_ws_token(token: str) -> str:
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        user_id = payload.get("sub")
+        if user_id is None:
+            return None
+        return user_id
+    except JWTError:
+        return None
+
+@router.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket, token: str = Query(...)):
+    user_id = verify_ws_token(token)
+    if not user_id:
+        await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+        return
+        
+    await manager.connect(websocket, user_id)
+    try:
+        while True:
+            data = await websocket.receive_text()
+            # Klien (Flutter) tidak perlu mengirim pesan via WS untuk disimpan ke database,
+            # Flutter akan tetap pakai POST /messages, dan kita akan broadcast dari sana.
+            # Websocket ini difokuskan sebagai "saluran pendengar" (Receiver) yang ringan.
+    except WebSocketDisconnect:
+        manager.disconnect(user_id)
 
 @router.get("/users/search", response_model=List[UserPublic])
 async def search_users(q: str, db: AsyncSession = Depends(get_db), current_user_id: uuid.UUID = Depends(get_current_user_id)):
@@ -87,6 +137,17 @@ async def send_message(
     current_user_id: uuid.UUID = Depends(get_current_user_id)
 ):
     msg = await crud_chat.send_message(db, current_user_id, req.receiver_id, req.content)
+    
+    # Broadcast pesan yang baru dibuat ke penerima secara real-time via WebSocket
+    msg_dict = ChatMessageResponse.model_validate(msg).model_dump()
+    # Convert datetime to string agar bisa dikonversi ke JSON
+    msg_dict['created_at'] = msg_dict['created_at'].isoformat()
+    msg_dict['id'] = str(msg_dict['id'])
+    msg_dict['sender_id'] = str(msg_dict['sender_id'])
+    msg_dict['receiver_id'] = str(msg_dict['receiver_id'])
+    
+    await manager.send_personal_message(json.dumps(msg_dict), str(req.receiver_id))
+    
     return msg
 
 @router.get("/messages/{other_user_id}", response_model=List[ChatMessageResponse])
