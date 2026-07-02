@@ -124,6 +124,7 @@ class AuthService:
                 "weight_kg": bmi.weight_kg if bmi else None,
                 "height_cm": bmi.height_cm if bmi else None,
                 "avatar_url": user.avatar_url,
+                "has_password": user.has_password,
             }
         }
 
@@ -168,6 +169,7 @@ class AuthService:
                 "weight_kg": bmi.weight_kg if bmi else None,
                 "height_cm": bmi.height_cm if bmi else None,
                 "avatar_url": user.avatar_url,
+                "has_password": user.has_password,
             }
         }
 
@@ -263,6 +265,7 @@ class AuthService:
             weight_kg=bmi_after.weight_kg if bmi_after else None,
             height_cm=bmi_after.height_cm if bmi_after else None,
             avatar_url=user.avatar_url,
+            has_password=user.has_password,
         )
 
     @staticmethod
@@ -321,6 +324,7 @@ class AuthService:
             weight_kg=bmi.weight_kg if bmi else None,
             height_cm=bmi.height_cm if bmi else None,
             avatar_url=user.avatar_url,
+            has_password=user.has_password,
         )
 
     @staticmethod
@@ -413,6 +417,7 @@ class AuthService:
                 "weight_kg": bmi.weight_kg if bmi else None,
                 "height_cm": bmi.height_cm if bmi else None,
                 "avatar_url": user.avatar_url,
+                "has_password": user.has_password,
             }
         }
 
