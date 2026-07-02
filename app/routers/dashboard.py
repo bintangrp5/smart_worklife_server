@@ -16,6 +16,7 @@ router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
 
 @router.get("/summary")
 async def get_summary(
+    target_date: Optional[date] = None,
     db: AsyncSession = Depends(get_db),
     user_id: uuid.UUID = Depends(get_current_user_id),
 ):
@@ -26,16 +27,17 @@ async def get_summary(
     - Today's Balance (work vs rest %)
     - Hydration progress
     """
-    return await crud.get_dashboard_summary(db, user_id)
+    return await crud.get_dashboard_summary(db, user_id, target_date)
 
 
 @router.get("/todos/preview", response_model=list[TodoResponse])
 async def todo_preview(
+    target_date: Optional[date] = None,
     db: AsyncSession = Depends(get_db),
     user_id: uuid.UUID = Depends(get_current_user_id),
 ):
     """Preview 5 tugas pending hari ini untuk widget di Home Screen."""
-    return await crud.get_todo_preview(db, user_id)
+    return await crud.get_todo_preview(db, user_id, target_date)
 
 
 @router.get("/leaderboard")

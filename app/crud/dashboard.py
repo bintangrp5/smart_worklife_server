@@ -11,8 +11,12 @@ from app.models.health import HydrationLog, HydrationSetting
 from app.models.stretching import StretchingSession
 
 
-async def get_dashboard_summary(db: AsyncSession, user_id: uuid.UUID) -> dict:
-    today = datetime.now(timezone.utc).date()
+async def get_dashboard_summary(db: AsyncSession, user_id: uuid.UUID, target_date=None) -> dict:
+    if target_date is None:
+        today = datetime.now(timezone.utc).date()
+    else:
+        today = target_date
+        
     today_start = datetime.combine(today, datetime.min.time()).replace(tzinfo=timezone.utc)
     today_end = datetime.combine(today, datetime.max.time()).replace(tzinfo=timezone.utc)
 
@@ -159,8 +163,11 @@ async def get_dashboard_summary(db: AsyncSession, user_id: uuid.UUID) -> dict:
 
 
 
-async def get_todo_preview(db: AsyncSession, user_id: uuid.UUID) -> list[Todo]:
-    today = datetime.now(timezone.utc).date()
+async def get_todo_preview(db: AsyncSession, user_id: uuid.UUID, target_date=None) -> list[Todo]:
+    if target_date is None:
+        today = datetime.now(timezone.utc).date()
+    else:
+        today = target_date
     result = await db.execute(
         select(Todo).where(
             and_(Todo.user_id == user_id, Todo.status == "pending", Todo.task_date == today)
