@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { BarChart2, Loader, Users, Flame, Calendar, UserPlus, Timer, Wrench } from 'lucide-react';
 
 const Overview = () => {
   const [stats, setStats] = useState(null);
@@ -101,25 +102,25 @@ const Overview = () => {
 
   return (
     <div className="page active" id="page-overview">
-      <div className="page-title">📊 Overview &amp; Metrik Aplikasi</div>
+      <div className="page-title"><BarChart2 style={{ marginRight: '8px', verticalAlign: 'text-bottom' }} /> Overview &amp; Metrik Aplikasi</div>
       <div className="page-sub">Ringkasan performa real-time Smart-WorkLife</div>
       <hr className="div" />
 
       <div className="kpi-grid">
         {loading ? (
-          <div className="spin">⏳ Memuat data...</div>
+          <div className="spin"><Loader className="animate-spin" style={{ marginRight: '8px', verticalAlign: 'text-bottom' }} /> Memuat data...</div>
         ) : stats?.error ? (
           <p style={{ color: 'var(--red)' }}>{stats.error}</p>
         ) : stats ? (
           <>
             <div className="kpi-card">
-              <div className="kpi-icon">👥</div>
+              <div className="kpi-icon"><Users /></div>
               <div className="kpi-label">Total Pengguna Aktif</div>
               <div className="kpi-value">{stats.total_users.toLocaleString()}</div>
               <div className="kpi-delta">+{stats.new_users_week} minggu ini</div>
             </div>
             <div className="kpi-card">
-              <div className="kpi-icon">🔥</div>
+              <div className="kpi-icon"><Flame /></div>
               <div className="kpi-label">DAU (Hari Ini)</div>
               <div className="kpi-value">{stats.dau.toLocaleString()}</div>
               <div className={`kpi-delta ${stats.dau_delta < 0 ? 'neg' : ''}`}>
@@ -127,13 +128,13 @@ const Overview = () => {
               </div>
             </div>
             <div className="kpi-card">
-              <div className="kpi-icon">📅</div>
+              <div className="kpi-icon"><Calendar /></div>
               <div className="kpi-label">MAU (Bulanan)</div>
               <div className="kpi-value">{stats.mau.toLocaleString()}</div>
               <div className="kpi-delta">Bulan ini</div>
             </div>
             <div className="kpi-card">
-              <div className="kpi-icon">🆕</div>
+              <div className="kpi-icon"><UserPlus /></div>
               <div className="kpi-label">User Baru (7 Hari)</div>
               <div className="kpi-value">{stats.new_users_week.toLocaleString()}</div>
               <div className="kpi-delta">Minggu ini</div>
@@ -144,13 +145,13 @@ const Overview = () => {
 
       <div className="chart-grid">
         <div className="chart-card">
-          <div className="chart-title">📅 Registrasi User Baru (7 Hari)</div>
+          <div className="chart-title"><Calendar style={{ marginRight: '8px', verticalAlign: 'text-bottom' }} size={20} /> Registrasi User Baru (7 Hari)</div>
           <div className="chart-wrap">
             <canvas ref={chartNewUsersRef}></canvas>
           </div>
         </div>
         <div className="chart-card">
-          <div className="chart-title">⏱️ Tren Sesi Pomodoro Selesai (14 Hari)</div>
+          <div className="chart-title"><Timer style={{ marginRight: '8px', verticalAlign: 'text-bottom' }} size={20} /> Tren Sesi Pomodoro Selesai (14 Hari)</div>
           <div className="chart-wrap">
             <canvas ref={chartPomodoroRef}></canvas>
           </div>
@@ -158,10 +159,10 @@ const Overview = () => {
       </div>
 
       <div className="chart-card" style={{ marginBottom: '24px' }}>
-        <div className="chart-title">🛠️ Penggunaan Fitur Bulan Ini</div>
+        <div className="chart-title"><Wrench style={{ marginRight: '8px', verticalAlign: 'text-bottom' }} size={20} /> Penggunaan Fitur Bulan Ini</div>
         <div className="feature-list">
           {loading ? (
-            <div className="spin">⏳ Memuat...</div>
+            <div className="spin"><Loader className="animate-spin" style={{ marginRight: '8px', verticalAlign: 'text-bottom' }} /> Memuat...</div>
           ) : features ? (
             Object.entries(features).map(([k, v]) => {
               const maxVal = Math.max(...Object.values(features), 1);

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { UsersIcon, Loader, CheckCircle2, Clock } from 'lucide-react';
 
 const Users = () => {
   const [users, setUsers] = useState(null);
@@ -19,7 +20,7 @@ const Users = () => {
 
   return (
     <div className="page active" id="page-users">
-      <div className="page-title">👥 Data Pengguna Terdaftar</div>
+      <div className="page-title"><UsersIcon style={{ marginRight: '8px', verticalAlign: 'text-bottom' }} /> Data Pengguna Terdaftar</div>
       <div className="page-sub">15 pengguna terbaru yang mendaftar</div>
       <hr className="div" />
       <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: '16px', padding: '20px' }}>
@@ -39,7 +40,7 @@ const Users = () => {
               {!users && !error ? (
                 <tr>
                   <td colSpan="6" style={{ textAlign: 'center', color: 'var(--muted)', padding: '30px' }}>
-                    ⏳ Memuat...
+                    <Loader className="animate-spin" style={{ marginRight: '8px', verticalAlign: 'text-bottom' }} size={16} /> Memuat...
                   </td>
                 </tr>
               ) : error ? (
@@ -56,7 +57,7 @@ const Users = () => {
                     <td style={{ color: 'var(--muted)' }}>{u.joined}</td>
                     <td>
                       <span className={u.is_verified ? 'badge-ok' : 'badge-no'}>
-                        {u.is_verified ? '✅ Terverifikasi' : '⏳ Belum'}
+                        {u.is_verified ? <><CheckCircle2 size={14} style={{ marginRight: '4px', verticalAlign: 'text-bottom' }} /> Terverifikasi</> : <><Clock size={14} style={{ marginRight: '4px', verticalAlign: 'text-bottom' }} /> Belum</>}
                       </span>
                     </td>
                   </tr>

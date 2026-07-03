@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Lock, XCircle, Mail, Key, FileText } from 'lucide-react';
 import styles from './Login.module.css';
 
 const Login = () => {
@@ -45,18 +46,18 @@ const Login = () => {
             <img src="/static/logo.png" className={styles.logoIcon} alt="Smart-WorkLife Logo" />
             <h1>Smart-WorkLife</h1>
             <p>Developer Operations Center</p>
-            <div className={styles.badge}>🔐 ADMIN ONLY</div>
+            <div className={styles.badge}><Lock size={12} style={{ marginRight: '4px', verticalAlign: 'text-bottom' }} /> ADMIN ONLY</div>
           </div>
           <h2 className={styles.title}>Selamat Datang</h2>
           <p className={styles.sub}>Login dengan kredensial developer Anda</p>
           
           <div className={`${styles.err} ${error ? styles.visible : ''}`}>
-            ❌ Email atau password salah.
+            <XCircle size={16} style={{ marginRight: '4px', verticalAlign: 'text-bottom' }} /> Email atau password salah.
           </div>
           
           <form onSubmit={doLogin}>
             <div className={styles.formGroup}>
-              <label>📧 Email Developer</label>
+              <label><Mail size={16} style={{ marginRight: '6px', verticalAlign: 'text-bottom' }} /> Email Developer</label>
               <input 
                 type="email" 
                 placeholder="admin@smartworklife.com" 
@@ -66,7 +67,7 @@ const Login = () => {
               />
             </div>
             <div className={styles.formGroup}>
-              <label>🔑 Password</label>
+              <label><Key size={16} style={{ marginRight: '6px', verticalAlign: 'text-bottom' }} /> Password</label>
               <input 
                 type="password" 
                 placeholder="••••••••" 
@@ -81,7 +82,7 @@ const Login = () => {
           </form>
           
           <div className={styles.divider}><hr/><span>atau</span><hr/></div>
-          <a href="/docs" className={styles.link}>📋 Lihat API Documentation (Swagger)</a>
+          <a href="/docs" className={styles.link}><FileText size={16} style={{ marginRight: '6px', verticalAlign: 'text-bottom' }} /> Lihat API Documentation (Swagger)</a>
         </div>
       </div>
     </div>

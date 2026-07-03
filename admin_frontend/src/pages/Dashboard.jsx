@@ -4,6 +4,18 @@ import Users from './Users';
 import Ratings from './Ratings';
 import Health from './Health';
 import { useNavigate } from 'react-router-dom';
+import { 
+  BarChart2, 
+  UsersIcon, 
+  Star, 
+  Activity, 
+  FileText, 
+  HeartPulse, 
+  FileCode2, 
+  LogOut, 
+  Menu, 
+  X 
+} from 'lucide-react';
 
 const Dashboard = () => {
   const [activePage, setActivePage] = useState('overview');
@@ -32,7 +44,9 @@ const Dashboard = () => {
   return (
     <>
       <div className="mobile-header">
-        <button className="btn-hamburger" onClick={() => setIsSidebarOpen(true)}>☰</button>
+        <button className="btn-hamburger" onClick={() => setIsSidebarOpen(true)}>
+          <Menu size={24} />
+        </button>
         <div className="mobile-title">Developer Dashboard</div>
       </div>
       
@@ -45,7 +59,9 @@ const Dashboard = () => {
             <div className="brand-name">Smart-WorkLife</div>
             <div className="brand-sub">Developer Dashboard</div>
           </div>
-          <button className="btn-close" onClick={() => setIsSidebarOpen(false)}>✕</button>
+          <button className="btn-close" onClick={() => setIsSidebarOpen(false)}>
+            <X size={24} />
+          </button>
         </div>
         <nav>
           <span className="nav-sep">Menu</span>
@@ -53,35 +69,41 @@ const Dashboard = () => {
             className={`nav-item ${activePage === 'overview' ? 'active' : ''}`}
             onClick={() => handleNavClick('overview')}
           >
-            📊 Overview &amp; Metrik
+            <BarChart2 size={18} style={{ marginRight: '8px' }} /> Overview &amp; Metrik
           </button>
           <button 
             className={`nav-item ${activePage === 'users' ? 'active' : ''}`}
             onClick={() => handleNavClick('users')}
           >
-            👥 Data Pengguna
+            <UsersIcon size={18} style={{ marginRight: '8px' }} /> Data Pengguna
           </button>
           <button 
             className={`nav-item ${activePage === 'ratings' ? 'active' : ''}`}
             onClick={() => handleNavClick('ratings')}
           >
-            ⭐ Feedback &amp; Rating
+            <Star size={18} style={{ marginRight: '8px' }} /> Feedback &amp; Rating
           </button>
           <button 
             className={`nav-item ${activePage === 'health' ? 'active' : ''}`}
             onClick={() => handleNavClick('health')}
           >
-            🖥️ System Health
+            <Activity size={18} style={{ marginRight: '8px' }} /> System Health
           </button>
           
           <span className="nav-sep">Links</span>
-          <a className="nav-item" href="/docs" target="_blank" rel="noreferrer">📋 API Docs (Swagger)</a>
-          <a className="nav-item" href="/health" target="_blank" rel="noreferrer">❤️ Health Check</a>
-          <a className="nav-item" href="/redoc" target="_blank" rel="noreferrer">📄 ReDoc</a>
+          <a className="nav-item" href="/docs" target="_blank" rel="noreferrer">
+            <FileText size={18} style={{ marginRight: '8px' }} /> API Docs (Swagger)
+          </a>
+          <a className="nav-item" href="/health" target="_blank" rel="noreferrer">
+            <HeartPulse size={18} style={{ marginRight: '8px' }} /> Health Check
+          </a>
+          <a className="nav-item" href="/redoc" target="_blank" rel="noreferrer">
+            <FileCode2 size={18} style={{ marginRight: '8px' }} /> ReDoc
+          </a>
         </nav>
         <div className="sidebar-footer">
           <button className="btn-logout" onClick={handleLogout}>
-            🚪 Logout
+            <LogOut size={18} style={{ marginRight: '8px' }} /> Logout
           </button>
         </div>
       </aside>
