@@ -53,6 +53,17 @@ async def start_session(
     db: AsyncSession, user_id: uuid.UUID, data: PomodoroSessionStart
 ) -> PomodoroSession:
     
+    # Auto-cleanup: Batalkan sesi sebelumnya yang nyangkut (in_progress)
+    stuck_result = await db.execute(
+        select(PomodoroSession).where(
+            and_(PomodoroSession.user_id == user_id, PomodoroSession.status == "in_progress")
+        )
+    )
+    stuck_sessions = stuck_result.scalars().all()
+    for st in stuck_sessions:
+        st.status = "cancelled"
+        st.ended_at = datetime.now(timezone.utc)
+
     setting_id = data.setting_id
     if not setting_id:
         settings = await get_or_create_settings(db, user_id)
