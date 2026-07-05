@@ -52,12 +52,21 @@ async def update_setting(
 async def start_session(
     db: AsyncSession, user_id: uuid.UUID, data: PomodoroSessionStart
 ) -> PomodoroSession:
+    
+    setting_id = data.setting_id
+    if not setting_id:
+        settings = await get_or_create_settings(db, user_id)
+        for s in settings:
+            if s.mode == data.mode:
+                setting_id = s.id
+                break
+
     session = PomodoroSession(
         user_id=user_id,
         mode=data.mode,
         session_type=data.session_type,
         duration_seconds=data.duration_seconds,
-        setting_id=data.setting_id,
+        setting_id=setting_id,
         status="in_progress",
         started_at=datetime.now(timezone.utc),
         session_date=datetime.now(timezone.utc).date(),
