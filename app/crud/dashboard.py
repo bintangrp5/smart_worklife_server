@@ -116,11 +116,10 @@ async def get_dashboard_summary(db: AsyncSession, user_id: uuid.UUID, target_dat
     work_points = focus_count
     break_points = break_count
     task_points = done_todos * 10
-    hydration_points = int(consumed_ml // 100)
     # Setiap gerakan unik stretching = 1 poin exercise (maksimal 6 gerakan per hari = 6 poin)
     exercise_points = stretching_count * 1
 
-    total_points = work_points + break_points + task_points + hydration_points + exercise_points
+    total_points = work_points + break_points + task_points + exercise_points
 
     # --- WLB Balance Percentages ---
     total_wlb_activity = work_points + break_points + exercise_points
@@ -252,7 +251,7 @@ async def get_leaderboard(db: AsyncSession, target_date=None) -> list[dict]:
         stretch_count = stretching_map.get(uid, 0)
 
         # Point calculation identical to dashboard logic
-        points = pomo_sessions + (todos_count * 10) + int(hydro_ml // 100) + stretch_count
+        points = pomo_sessions + (todos_count * 10) + stretch_count
 
         leaderboard.append({
             "user_id": str(uid),
