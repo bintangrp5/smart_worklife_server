@@ -39,6 +39,7 @@ class User(Base):
         DateTime(timezone=True), nullable=True
     )
     google_id: Mapped[str | None] = mapped_column(String(255), unique=True, nullable=True)
+    fcm_token: Mapped[str | None] = mapped_column(String(255), nullable=True)
     deletion_scheduled_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )

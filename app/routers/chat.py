@@ -4,7 +4,9 @@ from fastapi import APIRouter, Depends, HTTPException, status, WebSocket, WebSoc
 from sqlalchemy.ext.asyncio import AsyncSession
 from jose import jwt, JWTError
 import json
-from firebase_admin import firestore
+from firebase_admin import firestore, messaging
+from sqlalchemy import select
+from app.models.user import User
 
 from app.database import get_db
 from app.core.dependencies import get_current_user_id
@@ -138,6 +140,25 @@ def push_to_firestore(chat_room_id: str, msg_id: str, payload: dict):
     except Exception as e:
         print(f"Gagal mengirim pesan ke Firestore: {e}")
 
+def push_fcm_notification(fcm_token: str, sender_name: str, message_content: str, friend_id: str):
+    if not fcm_token:
+        return
+    try:
+        message = messaging.Message(
+            notification=messaging.Notification(
+                title=sender_name,
+                body=message_content,
+            ),
+            data={
+                "type": "chat",
+                "friendId": friend_id,
+            },
+            token=fcm_token,
+        )
+        messaging.send(message)
+    except Exception as e:
+        print(f"Gagal mengirim FCM: {e}")
+
 @router.post("/messages", response_model=ChatMessageResponse)
 async def send_message(
     req: ChatMessageCreate, 
@@ -171,6 +192,21 @@ async def send_message(
     }
     
     background_tasks.add_task(push_to_firestore, chat_room_id, str(msg.id), firestore_payload)
+    
+    # Send FCM Push Notification
+    # Get Sender Name & Receiver FCM Token
+    users_query = await db.execute(select(User).where(User.id.in_([current_user_id, req.receiver_id])))
+    db_users = users_query.scalars().all()
+    sender_name = "User"
+    receiver_token = None
+    for u in db_users:
+        if u.id == current_user_id:
+            sender_name = u.full_name or u.email
+        elif u.id == req.receiver_id:
+            receiver_token = u.fcm_token
+            
+    if receiver_token:
+        background_tasks.add_task(push_fcm_notification, receiver_token, sender_name, msg.content, str(current_user_id))
     
     return msg
 

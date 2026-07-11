@@ -95,4 +95,5 @@ class RequestDeleteAccount(BaseModel):
 class ConfirmDeleteAccount(BaseModel):
     otp_code: str = Field(..., min_length=4, max_length=4)
 
-
+class FCMTokenUpdate(BaseModel):
+    fcm_token: str
