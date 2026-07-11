@@ -28,6 +28,8 @@ class FriendshipResponse(BaseModel):
     addressee: Optional[UserPublic] = None
     last_message: Optional[str] = None
     last_message_time: Optional[datetime] = None
+    last_message_sender_id: Optional[uuid.UUID] = None
+    last_message_is_read: Optional[bool] = None
     unread_count: int = 0
 
     model_config = ConfigDict(from_attributes=True)
