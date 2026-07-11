@@ -110,6 +110,7 @@ async def mark_messages_read(db: AsyncSession, message_ids: list[uuid.UUID], use
     for msg in messages:
         msg.is_read = True
     await db.commit()
+    return messages
 
 async def delete_messages(db: AsyncSession, message_ids: list[uuid.UUID], user_id: uuid.UUID, delete_type: str):
     stmt = select(ChatMessage).where(ChatMessage.id.in_(message_ids))
