@@ -1,9 +1,10 @@
 import uuid
 from typing import List, Dict
-from fastapi import APIRouter, Depends, HTTPException, status, WebSocket, WebSocketDisconnect, Query
+from fastapi import APIRouter, Depends, HTTPException, status, WebSocket, WebSocketDisconnect, Query, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
 from jose import jwt, JWTError
 import json
+from firebase_admin import firestore
 
 from app.database import get_db
 from app.core.dependencies import get_current_user_id
@@ -130,9 +131,17 @@ async def remove_friend(
     await crud_chat.remove_friendship(db, friendship_id)
     return {"detail": "Friendship removed"}
 
+def push_to_firestore(chat_room_id: str, msg_id: str, payload: dict):
+    try:
+        db = firestore.client()
+        db.collection('chat_rooms').document(chat_room_id).collection('messages').document(msg_id).set(payload)
+    except Exception as e:
+        print(f"Gagal mengirim pesan ke Firestore: {e}")
+
 @router.post("/messages", response_model=ChatMessageResponse)
 async def send_message(
     req: ChatMessageCreate, 
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db), 
     current_user_id: uuid.UUID = Depends(get_current_user_id)
 ):
@@ -147,6 +156,21 @@ async def send_message(
     msg_dict['receiver_id'] = str(msg_dict['receiver_id'])
     
     await manager.send_personal_message(json.dumps(msg_dict), str(req.receiver_id))
+    
+    # ── FIRESTORE INTEGRATION ──
+    # Tentukan chat_room_id (ID diurutkan sesuai urutan abjad agar unik per pasang teman)
+    users = sorted([str(current_user_id), str(req.receiver_id)])
+    chat_room_id = f"{users[0]}_{users[1]}"
+    
+    firestore_payload = {
+        "sender_id": str(current_user_id),
+        "content": msg.content,
+        "timestamp": msg.created_at,
+        "is_read": False,
+        "deleted_for_everyone": False
+    }
+    
+    background_tasks.add_task(push_to_firestore, chat_room_id, str(msg.id), firestore_payload)
     
     return msg
 
