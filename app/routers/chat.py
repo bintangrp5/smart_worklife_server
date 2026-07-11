@@ -140,6 +140,17 @@ def push_to_firestore(chat_room_id: str, msg_id: str, payload: dict):
     except Exception as e:
         print(f"Gagal mengirim pesan ke Firestore: {e}")
 
+def update_firestore_read_status(chat_room_id: str, msg_ids: list):
+    try:
+        db = firestore.client()
+        batch = db.batch()
+        for msg_id in msg_ids:
+            doc_ref = db.collection('chat_rooms').document(chat_room_id).collection('messages').document(msg_id)
+            batch.update(doc_ref, {"is_read": True})
+        batch.commit()
+    except Exception as e:
+        print(f"Gagal update is_read di Firestore: {e}")
+
 def push_fcm_notification(fcm_token: str, sender_name: str, message_content: str, friend_id: str):
     if not fcm_token:
         return
@@ -222,10 +233,24 @@ async def get_messages(
 @router.put("/messages/read")
 async def mark_messages_read(
     req: ChatMessageReadRequest,
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
     current_user_id: uuid.UUID = Depends(get_current_user_id)
 ):
-    await crud_chat.mark_messages_read(db, req.message_ids, current_user_id)
+    updated_messages = await crud_chat.mark_messages_read(db, req.message_ids, current_user_id)
+    if updated_messages:
+        # Construct chat_room_id (sorted) and group msg_ids
+        chat_room_updates = {}
+        for msg in updated_messages:
+            users = sorted([str(msg.sender_id), str(msg.receiver_id)])
+            room_id = f"{users[0]}_{users[1]}"
+            if room_id not in chat_room_updates:
+                chat_room_updates[room_id] = []
+            chat_room_updates[room_id].append(str(msg.id))
+        
+        for room_id, msg_ids in chat_room_updates.items():
+            background_tasks.add_task(update_firestore_read_status, room_id, msg_ids)
+
     return {"detail": "Messages marked as read"}
 
 @router.delete("/messages")
