@@ -55,3 +55,6 @@ media/
 # Migrations (kalau pakai Alembic, opsional)
 versions/
 .vercel
+
+# Firebase Credentials
+smart-worklife-firebase-key.json

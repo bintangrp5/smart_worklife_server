@@ -3,6 +3,8 @@ import os
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+import firebase_admin
+from firebase_admin import credentials
 
 from app.models import *  # noqa: F401, F403 — populate SQLAlchemy metadata
 
@@ -12,6 +14,27 @@ from app.routers import auth, todo, pomodoro, health, stretching, notulen, dashb
 # Buat folder uploads hanya jika berjalan di local (bukan Vercel)
 if not os.getenv("VERCEL"):
     os.makedirs("uploads/avatars", exist_ok=True)
+
+# Inisialisasi Firebase Admin
+from app.core.config import settings
+import json
+
+if settings.FIREBASE_CREDENTIALS:
+    try:
+        if settings.FIREBASE_CREDENTIALS.startswith("{"):
+            # Jika di Vercel, kita akan baca dari string JSON
+            cert_dict = json.loads(settings.FIREBASE_CREDENTIALS)
+            cred = credentials.Certificate(cert_dict)
+        elif os.path.exists(settings.FIREBASE_CREDENTIALS):
+            # Jika berjalan di lokal, kita baca file .json
+            cred = credentials.Certificate(settings.FIREBASE_CREDENTIALS)
+        else:
+            raise Exception("File Firebase JSON tidak ditemukan atau format ENV tidak valid.")
+            
+        firebase_admin.initialize_app(cred)
+        print("Firebase Admin terinisialisasi.")
+    except Exception as e:
+        print(f"Gagal inisialisasi Firebase Admin: {e}")
 
 
 app = FastAPI(

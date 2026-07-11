@@ -9,7 +9,7 @@ from app.database import get_db
 from app.schemas.auth import (
     UserRegister, UserLogin, Token, OTPVerify,
     ForgotPassword, ResetPassword, GoogleAuth, UserOut, OTPResend, UserProfileUpdate,
-    ChangePassword, RequestDeleteAccount, ConfirmDeleteAccount
+    ChangePassword, RequestDeleteAccount, ConfirmDeleteAccount, FCMTokenUpdate
 )
 from app.services.auth_service import AuthService
 from app.core.dependencies import get_current_user_id
@@ -125,4 +125,20 @@ async def confirm_delete_account(
     """
     return await AuthService.confirm_delete_account(db, current_user_id, data)
 
-
+@router.put("/fcm-token")
+async def update_fcm_token(
+    data: FCMTokenUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user_id: uuid.UUID = Depends(get_current_user_id)
+):
+    from sqlalchemy import select
+    from app.models.user import User
+    
+    result = await db.execute(select(User).where(User.id == current_user_id))
+    user = result.scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+        
+    user.fcm_token = data.fcm_token
+    await db.commit()
+    return {"message": "FCM Token updated successfully"}
