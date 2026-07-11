@@ -90,18 +90,24 @@ async def get_friends(db: AsyncSession = Depends(get_db), current_user_id: uuid.
         
         last_message = None
         last_message_time = None
+        last_message_sender_id = None
+        last_message_is_read = None
         unread_count = 0
         
         if messages:
             last_msg = messages[-1]
             last_message = "Anda menghapus pesan ini" if last_msg.deleted_for_everyone else last_msg.content
             last_message_time = last_msg.created_at
+            last_message_sender_id = last_msg.sender_id
+            last_message_is_read = last_msg.is_read
             
             unread_count = sum(1 for m in messages if m.receiver_id == current_user_id and not m.is_read and not m.deleted_for_everyone)
             
         f_dict = FriendshipResponse.model_validate(f).model_dump()
         f_dict['last_message'] = last_message
         f_dict['last_message_time'] = last_message_time
+        f_dict['last_message_sender_id'] = last_message_sender_id
+        f_dict['last_message_is_read'] = last_message_is_read
         f_dict['unread_count'] = unread_count
         result.append(f_dict)
         
