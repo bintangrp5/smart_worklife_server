@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Star, Loader } from 'lucide-react';
+import { Star, Loader, Timer, CheckSquare, Droplet, Mic, Activity, Smartphone } from 'lucide-react';
 
 const Ratings = () => {
   const [ratings, setRatings] = useState(null);
@@ -31,11 +31,23 @@ const Ratings = () => {
               <Star key={idx} size={14} fill="var(--yellow)" color="var(--yellow)" style={{ marginRight: '2px', verticalAlign: 'middle' }} />
             ));
             return (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid var(--border)' }}>
-                <div>
-                  <div style={{ fontSize: '14px', fontWeight: 600 }}>{r.feature}</div>
-                  <div style={{ fontSize: '12px', color: 'var(--muted)' }}>{r.total} ulasan</div>
-                </div>
+                <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid var(--border)' }}>
+                  <div>
+                    <div style={{ fontSize: '14px', fontWeight: 600 }}>
+                      {(() => {
+                        const name = r.feature;
+                        if (name.includes('Pomodoro')) return <Timer size={16} style={{ marginRight: '8px', verticalAlign: 'text-bottom', color: '#EF4444' }} />;
+                        if (name.includes('Todo')) return <CheckSquare size={16} style={{ marginRight: '8px', verticalAlign: 'text-bottom', color: '#10B981' }} />;
+                        if (name.includes('Health')) return <Droplet size={16} style={{ marginRight: '8px', verticalAlign: 'text-bottom', color: '#3B82F6' }} />;
+                        if (name.includes('Notulen')) return <Mic size={16} style={{ marginRight: '8px', verticalAlign: 'text-bottom', color: '#8B5CF6' }} />;
+                        if (name.includes('Stretching')) return <Activity size={16} style={{ marginRight: '8px', verticalAlign: 'text-bottom', color: '#F59E0B' }} />;
+                        if (name.includes('Keseluruhan')) return <Smartphone size={16} style={{ marginRight: '8px', verticalAlign: 'text-bottom', color: '#6366F1' }} />;
+                        return null;
+                      })()}
+                      {r.feature}
+                    </div>
+                    <div style={{ fontSize: '12px', color: 'var(--muted)', marginTop: '4px' }}>{r.total} ulasan</div>
+                  </div>
                 <div style={{ textAlign: 'right' }}>
                   <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '4px' }}>{stars}</div>
                   <div style={{ fontSize: '13px', color: 'var(--yellow)', fontWeight: 600 }}>{r.avg_rating}/5.0</div>
