@@ -1,5 +1,13 @@
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--bg:#0f0c29;--sidebar:#1a1730;--card:rgba(255,255,255,.04);--border:rgba(255,255,255,.08);--text:#f1f5f9;--muted:rgba(255,255,255,.4);--accent:#4F46E5;--accent2:#7C3AED;--green:#10B981;--yellow:#F59E0B;--red:#EF4444;--blue:#3B82F6}
+[data-theme="light"] {
+  --bg: #f8fafc;
+  --sidebar: #ffffff;
+  --card: #ffffff;
+  --border: rgba(0, 0, 0, 0.1);
+  --text: #0f172a;
+  --muted: rgba(0, 0, 0, 0.5);
+}
 body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh}
 
 #root {

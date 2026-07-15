@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Overview from './Overview';
 import Users from './Users';
 import Ratings from './Ratings';
@@ -14,21 +14,29 @@ import {
   FileCode2, 
   LogOut, 
   Menu, 
-  X 
+  X,
+  Sun,
+  Moon
 } from 'lucide-react';
 
 const Dashboard = () => {
   const [activePage, setActivePage] = useState('overview');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
   const navigate = useNavigate();
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+  }, [theme]);
 
   const renderPage = () => {
     switch (activePage) {
-      case 'overview': return <Overview />;
-      case 'users': return <Users />;
-      case 'ratings': return <Ratings />;
-      case 'health': return <Health />;
-      default: return <Overview />;
+      case 'overview': return <Overview theme={theme} />;
+      case 'users': return <Users theme={theme} />;
+      case 'ratings': return <Ratings theme={theme} />;
+      case 'health': return <Health theme={theme} />;
+      default: return <Overview theme={theme} />;
     }
   };
 
@@ -101,7 +109,14 @@ const Dashboard = () => {
             <FileCode2 size={18} style={{ marginRight: '8px' }} /> ReDoc
           </a>
         </nav>
-        <div className="sidebar-footer">
+        <div className="sidebar-footer" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <button 
+            className="nav-item" 
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            style={{ justifyContent: 'center', background: 'rgba(255,255,255,0.05)' }}
+          >
+            {theme === 'dark' ? <><Sun size={18} style={{ marginRight: '8px' }} /> Light Mode</> : <><Moon size={18} style={{ marginRight: '8px' }} /> Dark Mode</>}
+          </button>
           <button className="btn-logout" onClick={handleLogout}>
             <LogOut size={18} style={{ marginRight: '8px' }} /> Logout
           </button>
