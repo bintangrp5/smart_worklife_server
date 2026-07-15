@@ -51,7 +51,7 @@ def generate_otp() -> str:
 async def update_user_otp(db: AsyncSession, user: User) -> str:
     otp = generate_otp()
     user.otp_code = otp
-    user.otp_expires_at = datetime.now(timezone.utc) + timedelta(minutes=1)
+    user.otp_expires_at = datetime.now(timezone.utc) + timedelta(minutes=5)
     await db.commit()
     await db.refresh(user)
     return otp
