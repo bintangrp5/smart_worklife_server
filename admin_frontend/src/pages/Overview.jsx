@@ -12,7 +12,9 @@ const Overview = ({ theme = 'dark' }) => {
   const chartNewUsersRef = useRef(null);
   const chartPomodoroRef = useRef(null);
   const chartYoutubeRef = useRef(null);
+  const chartYoutubeTrendRef = useRef(null);
   const chartDetikRef = useRef(null);
+  const chartDetikTopRef = useRef(null);
   const chartInstances = useRef({});
 
   // Theme Variables for Charts
@@ -107,9 +109,20 @@ const Overview = ({ theme = 'dark' }) => {
       .catch(err => {
         console.log("Using YT mock data fallback", err);
         if (isMounted) renderYoutubeChart({
-          labels: ['Makanan Bergetah, Makanan Asli vs Makanan Cokelat...','KING ABDI MASAK BEBEK HITAM VIRAL DI DAPUR TANBOY KUN !!','DJ TIKTOK TERBARU 2025 🎵 DJ CINTA SEBERANG 🎵 DJ...','VIRAL..! RUMAH PALSU LAGI VIRAL DI JAWA BARAT','KUMPULAN LAGU HITS SPOTIFY TIKTOK VIRAL 2025 - LAGU...'],
-          views: [59297621, 23971239, 13789123, 10002123, 4001923].map(v => v + Math.floor(Math.random()*1000000)),
-          likes: [2012391, 5183921, 1002341, 1209341, 800123].map(v => v + Math.floor(Math.random()*100000))
+          labels: ['Makanan Bergetah, Makanan Asli vs Makanan Cokelat...','KING ABDI MASAK BEBEK HITAM VIRAL DI DAPUR TANBOY KUN !!','DJ TIKTOK TERBARU 2025 🎵 DJ CINTA SEBERANG 🎵 DJ...','VIRAL..! RUMAH PALSU LAGI VIRAL DI JAWA BARAT','KUMPULAN LAGU HITS SPOTIFY TIKTOK VIRAL 2025 - LAGU...','Video 6','Video 7','Video 8','Video 9','Video 10'],
+          views: [59297621, 23971239, 13789123, 10002123, 4001923, 3000000, 2000000, 1000000, 500000, 100000].map(v => v + Math.floor(Math.random()*1000000)),
+          likes: [2012391, 5183921, 1002341, 1209341, 800123, 600000, 400000, 200000, 100000, 50000].map(v => v + Math.floor(Math.random()*100000))
+        });
+      });
+      
+    fetch(`/admin/api/bigdata-youtube-trend?end=${ytEndDate}`)
+      .then(res => { if (!res.ok) throw new Error("API not ready"); return res.json(); })
+      .then(data => { if (isMounted) renderYoutubeTrendChart(data); })
+      .catch(err => {
+        console.log("Using YT Trend mock data fallback", err);
+        if (isMounted) renderYoutubeTrendChart({
+          labels: ['Entertainment', 'Music', 'News', 'Education', 'Gaming'],
+          values: [40, 25, 15, 10, 10].map(v => v + Math.floor(Math.random()*5))
         });
       });
     return () => { isMounted = false; };
@@ -126,6 +139,17 @@ const Overview = ({ theme = 'dark' }) => {
         if (isMounted) renderDetikChart({
           labels: ['Terkini','Pendidikan','Pemerintah','Wisata','Ekonomi'],
           values: [35, 20, 15, 10, 20].map(v => v + Math.floor(Math.random()*10))
+        });
+      });
+      
+    fetch(`/admin/api/bigdata-detik-top?end=${dtEndDate}`)
+      .then(res => { if (!res.ok) throw new Error("API not ready"); return res.json(); })
+      .then(data => { if (isMounted) renderDetikTopChart(data); })
+      .catch(err => {
+        console.log("Using Detik Top mock data fallback", err);
+        if (isMounted) renderDetikTopChart({
+          labels: ['Berita 1', 'Berita 2', 'Berita 3', 'Berita 4', 'Berita 5', 'Berita 6', 'Berita 7', 'Berita 8', 'Berita 9', 'Berita 10'],
+          values: [50000, 45000, 40000, 35000, 30000, 25000, 20000, 15000, 10000, 5000]
         });
       });
     return () => { isMounted = false; };
@@ -175,6 +199,32 @@ const Overview = ({ theme = 'dark' }) => {
     });
   };
 
+  const renderYoutubeTrendChart = (data) => {
+    if (!window.Chart || !chartYoutubeTrendRef.current) return;
+    if (chartInstances.current.youtubeTrend) chartInstances.current.youtubeTrend.destroy();
+    
+    chartInstances.current.youtubeTrend = new window.Chart(chartYoutubeTrendRef.current, {
+      type: 'doughnut',
+      data: {
+        labels: data.labels,
+        datasets: [{
+          data: data.values,
+          backgroundColor: ['#EF4444','#F59E0B','#3B82F6','#10B981','#8B5CF6'],
+          borderWidth: theme === 'light' ? 2 : 0,
+          borderColor: theme === 'light' ? '#fff' : 'transparent',
+          hoverOffset: 4
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'right', labels: { color: textColorPrimary, font: { size: 11 }, padding: 15, boxWidth: 12 } }
+        },
+        cutout: '70%'
+      }
+    });
+  };
+
   const renderDetikChart = (data) => {
     if (!window.Chart || !chartDetikRef.current) return;
     if (chartInstances.current.detik) chartInstances.current.detik.destroy();
@@ -197,6 +247,45 @@ const Overview = ({ theme = 'dark' }) => {
           legend: { position: 'right', labels: { color: textColorPrimary, font: { size: 11 }, padding: 15, boxWidth: 12 } }
         },
         cutout: '70%'
+      }
+    });
+  };
+
+  const renderDetikTopChart = (data) => {
+    if (!window.Chart || !chartDetikTopRef.current) return;
+    if (chartInstances.current.detikTop) chartInstances.current.detikTop.destroy();
+    
+    chartInstances.current.detikTop = new window.Chart(chartDetikTopRef.current, {
+      type: 'bar',
+      data: {
+        labels: data.labels,
+        datasets: [{
+          label: 'Estimated Reads',
+          data: data.values,
+          backgroundColor: 'rgba(79,70,229,.6)',
+          borderColor: '#4F46E5',
+          borderWidth: 1,
+          borderRadius: 4
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false },
+          tooltip: {
+            callbacks: {
+              title: function(context) {
+                const fullTitle = context[0].label;
+                if (fullTitle.length <= 40) return fullTitle;
+                return fullTitle.substring(0, 40) + '...';
+              }
+            }
+          }
+        },
+        scales: {
+          x: { ticks: { color: textColorMuted, font: { size: 10 } }, grid: { color: gridColor } },
+          y: { ticks: { color: textColorMuted, font: { size: 10 }, callback: function(value) { const label = this.getLabelForValue(value); return label.length > 20 ? label.substring(0, 20) + '...' : label; } } }
+        }
       }
     });
   };
@@ -238,7 +327,7 @@ const Overview = ({ theme = 'dark' }) => {
           <div className="chart-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               <div style={{ display: 'flex', alignItems: 'center' }}>
-                <PlayCircle style={{ marginRight: '8px', verticalAlign: 'text-bottom', color: '#EF4444' }} size={20} /> Top 5 Video YouTube
+                <PlayCircle style={{ marginRight: '8px', verticalAlign: 'text-bottom', color: '#EF4444' }} size={20} /> Top 10 Video YouTube
               </div>
               <div style={{ fontSize: '11px', color: textColorMuted, marginTop: '4px', marginLeft: '28px', fontWeight: 'normal' }}>
                 Berdasarkan interaksi (jumlah <strong>Views</strong> &amp; <strong>Likes</strong>) tertinggi
@@ -253,13 +342,43 @@ const Overview = ({ theme = 'dark' }) => {
           <div className="chart-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               <div style={{ display: 'flex', alignItems: 'center' }}>
+                <PlayCircle style={{ marginRight: '8px', verticalAlign: 'text-bottom', color: '#EF4444' }} size={20} /> Tren Topik YouTube
+              </div>
+              <div style={{ fontSize: '11px', color: textColorMuted, marginTop: '4px', marginLeft: '28px', fontWeight: 'normal' }}>
+                Berdasarkan <strong>kategori</strong> video
+              </div>
+            </div>
+          </div>
+          <div className="chart-wrap" style={{ display: 'flex', justifyContent: 'center' }}><canvas ref={chartYoutubeTrendRef} style={{ maxWidth: '300px' }}></canvas></div>
+        </div>
+      </div>
+
+      <div className="chart-grid">
+        <div className="chart-card">
+          <div className="chart-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <Globe style={{ marginRight: '8px', verticalAlign: 'text-bottom', color: '#3B82F6' }} size={20} /> Top 10 Berita Detik
+              </div>
+              <div style={{ fontSize: '11px', color: textColorMuted, marginTop: '4px', marginLeft: '28px', fontWeight: 'normal' }}>
+                Berdasarkan <strong>estimasi pembaca</strong> terbaru
+              </div>
+            </div>
+            <input type="date" value={dtEndDate} onChange={e => setDtEndDate(e.target.value)} style={{ padding: '4px 8px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)', outline: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 'normal' }} />
+          </div>
+          <div className="chart-wrap"><canvas ref={chartDetikTopRef}></canvas></div>
+        </div>
+
+        <div className="chart-card">
+          <div className="chart-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <div style={{ display: 'flex', alignItems: 'center' }}>
                 <Globe style={{ marginRight: '8px', verticalAlign: 'text-bottom', color: '#3B82F6' }} size={20} /> Tren Topik Berita (Detik)
               </div>
               <div style={{ fontSize: '11px', color: textColorMuted, marginTop: '4px', marginLeft: '28px', fontWeight: 'normal' }}>
                 Berdasarkan <strong>volume publikasi</strong> (jumlah artikel)
               </div>
             </div>
-            <input type="date" value={dtEndDate} onChange={e => setDtEndDate(e.target.value)} style={{ padding: '4px 8px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)', outline: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 'normal' }} />
           </div>
           <div className="chart-wrap" style={{ display: 'flex', justifyContent: 'center' }}><canvas ref={chartDetikRef} style={{ maxWidth: '300px' }}></canvas></div>
         </div>
