@@ -99,6 +99,15 @@ tr:hover td{background:rgba(255,255,255,.03)}
 /* ── Ratings ── */
 .star{color:#F59E0B}
 
+/* ── Form Elements ── */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  cursor: pointer;
+}
+[data-theme="light"] input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: none;
+}
+
 /* ── Responsiveness ── */
 @media (max-width: 992px) {
   .kpi-grid { grid-template-columns: repeat(2, 1fr); }
