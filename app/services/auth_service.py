@@ -54,9 +54,10 @@ class AuthService:
         from app.services.email_service import send_otp_email
         email_sent = await send_otp_email(user.email, otp)
         if not email_sent:
-            # Dev mode: OTP tetap tersimpan di DB walau email gagal.
-            # Ambil OTP via: python dev_get_otp.py <email>
-            print(f"[DEV WARNING] Email OTP gagal dikirim ke {user.email}. OTP={otp}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Gagal mengirim email OTP. Pastikan konfigurasi SMTP benar atau periksa log Vercel."
+            )
 
         # Buat UserOut secara manual agar tidak trigger lazy-load relasi bmi_profile
         return UserOut(
@@ -181,7 +182,9 @@ class AuthService:
         otp = await crud_auth.update_user_otp(db, user)
 
         from app.services.email_service import send_otp_email
-        await send_otp_email(user.email, otp)
+        email_sent = await send_otp_email(user.email, otp)
+        if not email_sent:
+            raise HTTPException(status_code=500, detail="Gagal mengirim ulang email OTP.")
         return {"message": "OTP baru telah dikirim ke email."}
 
     @staticmethod
@@ -190,7 +193,9 @@ class AuthService:
         if user:
             otp = await crud_auth.update_user_otp(db, user)
             from app.services.email_service import send_otp_email
-            await send_otp_email(user.email, otp)
+            email_sent = await send_otp_email(user.email, otp)
+            if not email_sent:
+                raise HTTPException(status_code=500, detail="Gagal mengirim email reset password.")
         # Selalu return success (tidak bocorkan apakah email terdaftar)
         return {"message": "Instruksi reset password telah dikirim ke email jika akun terdaftar."}
 
